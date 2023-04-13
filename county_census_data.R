@@ -288,19 +288,4 @@ data.2020_NC <- tidycensus::get_acs(geography = "state",
                                     survey = "acs5")
 
 
-# # acs1p_vars <- tidycensus::load_variables(2019, "acs1/profile")
-# # acs1_vars  <- tidycensus::load_variables(2019, "acs1")
-# 
-# search.ptrns <- c("total population") %>% 
-#   paste(., sep = "|", collapse = "|")
-# 
-# grep(search.ptrns, x = acs5p_vars$concept, ignore.case = T, value = T) %>% unique
-# grep(search.ptrns, x = acs5_vars$concept,  ignore.case = T, value = T) %>% unique
-# 
-# grep(search.ptrns, x = acs5p_vars$label,   ignore.case = T, value = T) %>% unique
-# grep(search.ptrns, x = acs5_vars$label,    ignore.case = T, value = T) %>% unique
-# 
-# acs5_vars[grepl("^TOTAL POPULATION$", acs5_vars$concept),]
-# acs5_vars[grepl("UNWEIGHTED TOTAL POPULATION SAMPLE", acs5_vars$concept),]
-# 
-# acs5_vars$concept %>% unique
+
