@@ -49,12 +49,18 @@ acs5_2019.vars[grepl("\\(hispanic or latino\\)", acs5_2019.vars$concept, ignore.
 acs5_2019.vars[grepl("white alone", acs5_2019.vars$concept, ignore.case = T),]$concept %>% unique()
 
 acs5_2019.vars[grepl("white alone", acs5_2019.vars$label, ignore.case = T),]$concept %>% unique()
+acs5_2019.vars[grepl("^Estimate!!Total:", acs5_2019.vars$label, ignore.case = T),]$concept %>%
+  grep("^poverty", ., ignore.case = T, value = T) %>%
+  unique()
+
+acs5_2019.vars[grepl("POVERTY STATUS IN THE PAST 12 MONTHS BY SEX BY AGE \\(WHITE ALONE\\)",
+                     acs5_2019.vars$concept, ignore.case = T),] %>% .$name 
 
 
 
 acs5_vars.cw <- rbind(data.frame(year = 2020, 
                                  variable = c("B01003_001E", # total population
-                                              "B06012_001E", # in poverty
+                                              NA, # in poverty
                                               "B02001_001E", # race - total 
                                               "B02001_002E", # race - white alone 
                                               "B02001_003E", # race - black or african american alone 
@@ -162,7 +168,7 @@ acs5_vars.cw <- rbind(data.frame(year = 2020,
                                  )), 
                       data.frame(year = 2019, 
                                  variable = c("B01003_001E", # total population
-                                              "B06012_001E", # in poverty
+                                              NA, # in poverty
                                               "B02001_001E", # race - total 
                                               "B02001_002E", # race - white alone 
                                               "B02001_003E", # race - black or african american alone 
@@ -267,19 +273,25 @@ acs5_vars.cw <- rbind(data.frame(year = 2020,
                                               "HISPANIC OR LATINO ORIGIN BY RACE - total - hispanic or latino: two or more races including some other race", 
                                               "HISPANIC OR LATINO ORIGIN BY RACE - total - hispanic or latino: two or more races excluding some other race, and three or more races"
                                  ))) %>%
-  as_tibble()
+  as_tibble() 
 
 acs5_vars.cw$var_def <- acs5_vars.cw$var_def %>%
   gsub(pattern = " {2,}", " ", .) %>%
   trimws() %>% tolower()
 
+acs5_vars.cw$var_prefix <- acs5_vars.cw$variable %>% strsplit(., "_") %>% lapply(., first) %>% unlist
+acs5_vars.cw$var_suffix <- acs5_vars.cw$variable %>% strsplit(., "_") %>% lapply(., last) %>% unlist
 
 # download data----
 data.2019_NC <- tidycensus::get_acs(geography = "state", 
                     variables  = acs5_vars.cw$variable[acs5_vars.cw$year == 2019], 
                     year   = 2019, 
                     state  = "NC", 
-                    survey = "acs5")
+                    survey = "acs5") 
+
+data.2019_NC <- full_join(data.2019_NC, 
+                          mutate(acs5_vars.cw[acs5_vars.cw$year == 2019,], 
+                                 variable = gsub("E$", "", variable)))
 
 data.2020_NC <- tidycensus::get_acs(geography = "state", 
                                     variables  = acs5_vars.cw$variable[acs5_vars.cw$year == 2020], 
@@ -287,5 +299,8 @@ data.2020_NC <- tidycensus::get_acs(geography = "state",
                                     state  = "NC", 
                                     survey = "acs5")
 
-
-
+# Tidy data----
+# all people, all races
+data.2019_NC[data.2019_NC$var_def == "total population",]$estimate %>% scales::comma()
+# all people in poverty, all races
+data.2019_NC[data.2019_NC$var_def == "in poverty",]$estimate %>% scales::comma()
