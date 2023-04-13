@@ -61,22 +61,21 @@ variables_list_2019 <- c(acs5_2019.vars[grepl("POVERTY STATUS IN THE PAST 12 MON
                                                     sep = "|", collapse = "|"), 
                                               acs5_2019.vars$name, 
                                               ignore.case = T),]$name) 
-
+variables_list_2020 <- NA
 
 
 # download data----
 data.2019_NC <- tidycensus::get_acs(geography = "state", 
-                    variables  = acs5_vars.cw$variable[acs5_vars.cw$year == 2019], 
+                    variables  = variables_list_2019, 
                     year   = 2019, 
                     state  = "NC", 
                     survey = "acs5") 
 
 data.2019_NC <- full_join(data.2019_NC, 
-                          mutate(acs5_vars.cw[acs5_vars.cw$year == 2019,], 
-                                 variable = gsub("E$", "", variable)))
+                          NA)
 
 data.2020_NC <- tidycensus::get_acs(geography = "state", 
-                                    variables  = acs5_vars.cw$variable[acs5_vars.cw$year == 2020], 
+                                    variables  = variables_list_2020, 
                                     year   = 2020, 
                                     state  = "NC", 
                                     survey = "acs5")
