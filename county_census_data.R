@@ -33,4 +33,11 @@ all.nc.counties      <- tigris::counties(state = "NC", cb = T, year = census.yea
 co_coc.cw            <- read_csv("https://raw.githubusercontent.com/timbender-ncceh/PIT_HIC/main/crosswalks/county_district_region_crosswalk.csv") 
 co_coc.cw$coc        <- unlist(lapply(X = strsplit(co_coc.cw$`Coc/Region`, " Region "), FUN = first))
 co_coc.cw$region.coc <- as.numeric(unlist(lapply(X = strsplit(co_coc.cw$`Coc/Region`, " Region "), FUN = last)))
+co_coc.cw <- co_coc.cw[,c(2,5,6)]
 
+nc.counties <- full_join(all.nc.counties, 
+          co_coc.cw,
+           by = c("NAME" = "County")) %>% as_tibble()
+
+# cleanup
+rm(co_coc.cw, all.nc.counties)
