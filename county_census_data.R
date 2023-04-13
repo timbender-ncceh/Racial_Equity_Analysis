@@ -44,14 +44,14 @@ rm(co_coc.cw, all.nc.counties)
 
 acs5_2019.vars <- tidycensus::load_variables(2019, "acs5")
 
-acs5_2019.vars[acs5_2019.vars$name == "B01001_001",]
-acs5_2019.vars[grepl("\\(hispanic or latino\\)", acs5_2019.vars$concept, ignore.case = T),]$concept %>% unique()
-acs5_2019.vars[grepl("white alone", acs5_2019.vars$concept, ignore.case = T),]$concept %>% unique()
-
-acs5_2019.vars[grepl("white alone", acs5_2019.vars$label, ignore.case = T),]$concept %>% unique()
-acs5_2019.vars[grepl("^Estimate!!Total:", acs5_2019.vars$label, ignore.case = T),]$concept %>%
-  grep("^poverty", ., ignore.case = T, value = T) %>%
-  unique()
+# acs5_2019.vars[acs5_2019.vars$name == "B01001_001",]
+# acs5_2019.vars[grepl("\\(hispanic or latino\\)", acs5_2019.vars$concept, ignore.case = T),]$concept %>% unique()
+# acs5_2019.vars[grepl("white alone", acs5_2019.vars$concept, ignore.case = T),]$concept %>% unique()
+# 
+# acs5_2019.vars[grepl("white alone", acs5_2019.vars$label, ignore.case = T),]$concept %>% unique()
+# acs5_2019.vars[grepl("^Estimate!!Total:", acs5_2019.vars$label, ignore.case = T),]$concept %>%
+#   grep("^poverty", ., ignore.case = T, value = T) %>%
+#   unique()
 
 variables_list_2019 <- c(acs5_2019.vars[grepl("POVERTY STATUS IN THE PAST 12 MONTHS BY SEX BY AGE", #"POVERTY STATUS IN THE PAST 12 MONTHS BY SEX BY AGE \\(WHITE ALONE\\)",
                                             acs5_2019.vars$concept, ignore.case = T) & 
