@@ -43,6 +43,8 @@ nc.counties <- full_join(all.nc.counties,
 rm(co_coc.cw, all.nc.counties)
 
 acs5_2019.vars <- tidycensus::load_variables(2019, "acs5")
+acs5_2020.vars <- tidycensus::load_variables(2020, "acs5")
+
 
 # acs5_2019.vars[acs5_2019.vars$name == "B01001_001",]
 # acs5_2019.vars[grepl("\\(hispanic or latino\\)", acs5_2019.vars$concept, ignore.case = T),]$concept %>% unique()
@@ -72,13 +74,18 @@ data.2019_NC <- tidycensus::get_acs(geography = "state",
                     survey = "acs5") 
 
 data.2019_NC <- full_join(data.2019_NC, 
-                          NA)
+                          acs5_2019.vars, 
+                          by = c("variable" = "name"))
 
 data.2020_NC <- tidycensus::get_acs(geography = "state", 
                                     variables  = variables_list_2020, 
                                     year   = 2020, 
                                     state  = "NC", 
                                     survey = "acs5")
+
+
+
+
 
 # Tidy data----
 # all people, all races
