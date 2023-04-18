@@ -1,0 +1,25 @@
+year,population,subpopulation,ALL.PPL_total,ALL.PPL_in.fwc,IN.POV_total,IN.POV_in.fwc,EXP.HL_total,EXP.HL_in.fwc
+2020,All_People,TOTAL,B01001_001,NA,NA,NA,NA,NA
+2020,All_People,Asian/Pacific Islander,B01001D_001 + B01001E_001,NA,NA,NA,NA,NA
+2020,All_People,Black,B01001B_001,NA,NA,NA,NA,NA
+2020,All_People,Native American/Alaskan,B01001C_001,NA,NA,NA,NA,NA
+2020,All_People,White,B01001A_001,NA,NA,NA,NA,NA
+2020,All_People,Other/Multi-Racial,B01001F_001 + B01001G_001,NA,NA,NA,NA,NA
+2020,All_People,Hispanic,B01001I_001,NA,NA,NA,NA,NA
+2020,All_People,Not Hispanic,B01001_001 - B01001I_001,NA,NA,NA,NA,NA
+2020,Veteran,TOTAL,NA,NA,NA,NA,NA,NA
+2020,Veteran,Asian/Pacific Islander,NA,NA,NA,NA,NA,NA
+2020,Veteran,Black,NA,NA,NA,NA,NA,NA
+2020,Veteran,Native American/Alaskan,NA,NA,NA,NA,NA,NA
+2020,Veteran,White,NA,NA,NA,NA,NA,NA
+2020,Veteran,Other/Multi-Racial,NA,NA,NA,NA,NA,NA
+2020,Veteran,Hispanic,NA,NA,NA,NA,NA,NA
+2020,Veteran,Not Hispanic,NA,NA,NA,NA,NA,NA
+2020,Youth,TOTAL,NA,NA,NA,NA,NA,NA
+2020,Youth,Asian/Pacific Islander,NA,NA,NA,NA,NA,NA
+2020,Youth,Black,NA,NA,NA,NA,NA,NA
+2020,Youth,Native American/Alaskan,NA,NA,NA,NA,NA,NA
+2020,Youth,White,NA,NA,NA,NA,NA,NA
+2020,Youth,Other/Multi-Racial,NA,NA,NA,NA,NA,NA
+2020,Youth,Hispanic,NA,NA,NA,NA,NA,NA
+2020,Youth,Not Hispanic,NA,NA,NA,NA,NA,NA
