@@ -20,23 +20,6 @@ r_code.wd   <- "C:/Users/TimBender/Documents/R/ncceh/projects/racial_equity_anal
 setwd(prime.wd)
 
 # Master Table Design----
-
-expand.grid(race = c(letters[1:5], LETTERS[6:7]),
-            FWC = c("in_fam_w_children","not_in_fam_w_children"),
-            PS = c("in_poverty", "not_in_poverty"),
-            #count_by = c("ALL_Pop", "In_fam_w_children"),
-            VET = c("is_vet", "not_vet"),
-            AGE = c("is_youth", "not_youth"),
-            n = 0, 
-            stringsAsFactors = F) %>%
-  as_tibble() %>%
-  .[ !(.$VET == "is_vet" &  .$AGE == "is_youth"),] %>%
-  .[ !(.$FWC == "in_fam_w_children" & .$AGE == "is_youth"),] %>%
-  as.data.table() %>%
-  dcast(., 
-        VET + AGE + race ~ FWC + PS)
-
-
 master.table <- expand.grid(population = c("All_People", "Youth", "Veteran"), 
                             year = c(2020),#,2019),
                             concept = factor(c("ALL.PPL", "IN.POV", "EXP.HL"),
@@ -257,8 +240,3 @@ search.terms.df <- data.frame(data_source     = c("load_variables()"),
                                                  "veteran status, race, age", 
                                                  "family type, presence of children, race")) %>%
   as_tibble()
-
-
-
-
-
