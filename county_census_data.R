@@ -21,7 +21,7 @@ setwd(prime.wd)
 
 # Master Table Design----
 master.table <- expand.grid(population = c("All_People", "Youth", "Veteran"), 
-                            year = c(2020),#,2019),
+                            year = c(2020,2019),
                             concept = factor(c("ALL.PPL", "IN.POV", "EXP.HL"),
                                           levels = c("ALL.PPL", "IN.POV", "EXP.HL")),
                             var3 = factor(c("total", "in.fwc"), 
@@ -90,28 +90,113 @@ master.table$ALL.PPL_total[master.table$population == "Youth" & master.table$sub
 master.table$ALL.PPL_total[master.table$population == "Youth" & master.table$subpopulation == "Hispanic"]                <- "B01001I_003 + B01001I_004 + B01001I_005 + B01001I_006 + B01001I_007 + B01001I_008 + B01001I_018 + B01001I_019 + B01001I_020 + B01001I_021 + B01001I_022 + B01001I_023"
 master.table$ALL.PPL_total[master.table$population == "Youth" & master.table$subpopulation == "Not Hispanic"]            <- "(B01001_003 + B01001_004 + B01001_005 + B01001_006 + B01001_007 + B01001_008 + B01001_009 + B01001_010 + B01001_027 + B01001_028 + B01001_029 + B01001_030 + B01001_031 + B01001_032 + B01001_033 + B01001_034) - (B01001I_003 + B01001I_004 + B01001I_005 + B01001I_006 + B01001I_007 + B01001I_008 + B01001I_018 + B01001I_019 + B01001I_020 + B01001I_021 + B01001I_022 + B01001I_023)"
 
-master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
-master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
-master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
-master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
-master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
-master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
-master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
-master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
-
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
+# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
+# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
+# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
+# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
+# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
+# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
+# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
+# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
+# 
+# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
+# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
+# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
+# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
+# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
+# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
+# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
+# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
 
 master.table %>% as_tibble()
 
 write_csv(master.table, file = "census_table_source_info.csv")
 
+
+# Data Pullsdown----
+
+master.data <- master.table %>%
+  mutate(., 
+         ALL.PPL_total  = NA_real_, 
+         ALL.PPL_in.fwc = NA_real_, 
+         IN.POV_total   = NA_real_, 
+         IN.POV_in.fwc  = NA_real_, 
+         EXP.HL_total   = NA_real_, 
+         EXP.HL_in.fwc  = NA_real_)
+
+for(ic in 4:ncol(master.data)){
+  for(ir in 1:nrow(master.data)){
+    temp.tbls <- master.table[ir,ic] %>% 
+      unlist %>% 
+      unname
+    
+    if(!is.na(temp.tbls)){
+      temp.tbls <- strsplit(temp.tbls, split = " ") %>%
+        unlist()
+    }else{
+      temp.tbls <- NA
+      # why is this happening? ----
+    }
+      
+    # logic for  handling multiple table queries
+    if(length(temp.tbls) == 1){
+      # single table query
+      if(is.na(temp.tbls)){
+        temp.val <- NA
+        # this is a problem----
+      }else{
+        temp.val <- tidycensus::get_acs(geography = "state", 
+                                        variables = temp.tbls, 
+                                        table = NULL, 
+                                        year = master.data$year[ir], 
+                                        state = "NC", 
+                                        county = NULL, 
+                                        geometry = F, 
+                                        survey = "acs5")$estimate
+      }
+      
+    }else{
+      # multiple table query
+      # TO DO ----
+      
+      # if all operators are "+" then just get all tables and add them together
+      if(all(temp.tbls[nchar(temp.tbls) == 1] == "+")){
+        all.tbls <- temp.tbls[nchar(temp.tbls) != 1]
+        sum.tbls <- NULL
+        for(i.tbl in all.tbls){
+          sum.tbls <- c(sum.tbls, 
+                        tidycensus::get_acs(geography = "state", 
+                              variables = i.tbl, 
+                              table = NULL, 
+                              year = master.data$year[ir], 
+                              state = "NC", 
+                              county = NULL, 
+                              geometry = F, 
+                              survey = "acs5")$estimate)
+        }
+        temp.val <- sum(sum.tbls)
+        rm(sum.tbls,i.tbl)
+        
+      }else{
+        # TO DO----
+        # some addition and some subtraction in operators
+        temp.val <- NA
+      }
+      
+      
+      
+      #temp.val <- NA
+    }
+    # write to master.data
+    master.data[ir,ic] <- temp.val
+    rm(temp.val, temp.tbls)
+  }
+}
+
+View(master.data)
+
+
+# Data Lookup Tools below----
 
 # acs5.2019.vars <- tidycensus::load_variables(year = 2019, 
 #                                              dataset = "acs5") %>%
