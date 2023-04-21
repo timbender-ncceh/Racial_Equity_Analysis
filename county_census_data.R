@@ -143,39 +143,57 @@ acs5.2020.vars <- tidycensus::load_variables(year = 2020,
   .[complete.cases(.),]
 
 # search terms vars----
-regex.youth <- c("!!Under 5 years", 
-                 "!!5 to 9 years",
-                 "!!10 to 14 years", 
-                 "!!15 to 17 years", 
-                 "!!18 and 19 years", 
-                 "!!20 years", 
-                 "!!21 years", 
-                 "!!22 to 24 years", 
-                 "!!20 to 24 years")
-regex.race <- c("(WHITE ALONE)", 
-                "(BLACK OR AFRICAN AMERICAN ALONE)", 
-                "(AMERICAN INDIAN AND ALASKA NATIVE ALONE)", 
-                "(ASIAN ALONE)", 
-                "(NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE)", 
-                "(SOME OTHER RACE ALONE)",
-                "(TWO OR MORE RACES)", 
-                "(HISPANIC OR LATINO)")
+regex.youth       <- c("!!Under 5 years", 
+                       "!!5 to 9 years",
+                       "!!10 to 14 years", 
+                       "!!15 to 17 years", 
+                       "!!18 and 19 years", 
+                       "!!20 years", 
+                       "!!21 years", 
+                       "!!22 to 24 years", 
+                       "!!20 to 24 years") %>% paste(., sep = "|", collapse = "|")
+regex.race        <- c("(WHITE ALONE)", 
+                       "(BLACK OR AFRICAN AMERICAN ALONE)", 
+                       "(AMERICAN INDIAN AND ALASKA NATIVE ALONE)", 
+                       "(ASIAN ALONE)", 
+                       "(NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE)", 
+                       "(SOME OTHER RACE ALONE)",
+                       "(TWO OR MORE RACES)", 
+                       "(HISPANIC OR LATINO)")  %>% paste(., sep = "|", collapse = "|")
+regex.vet         <- c("VETERAN STATUS FOR THE CIVILIAN POPULATION 18 YEARS AND OVER")  %>% paste(., sep = "|", collapse = "|")
+regex.fam.w.child <- c("FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS")  %>% paste(., sep = "|", collapse = "|")
+regex.poverty     <- c("POVERTY STATUS IN THE PAST 12 MONTHS") %>% paste(., sep = "|", collapse = "|")
+regex.allppl      <- c("Estimate!!Total:") %>% paste(., sep = "|", collapse = "|")
 
-veteran.pattern.concepts <- NA
 
 
-get_tables2 <- function(regex.concept, 
-                        regex.label,
+get_tables2 <- function(regex.concept.v, 
+                        regex.label.v,
                         year1 = 2020,
                         dataset1 = "acs5"){
   require(dplyr)
   require(tidycensus)
+  
   # pull master dataset
   df <- load_variables(year = year1, 
                        dataset = dataset1) %>%
     .[,c("name", "label", "concept")] %>%
     .[!duplicated(.),] %>%
     .[complete.cases(.),]
+  
+  # concept filter
+  df.concept <- df$concept
+  out.concept <- list()
+  for(i in 1:length(regex.concept.v)){
+    out.concept[[i]] <- grepl(pattern = regex.concept.v[i], x = df.concept)
+  }
+  
+  # label filter
+  df.label <- df$label
+  out.label <- list()
+  for(i in 1:length(regex.label.v)){
+    out.label[[i]] <- grepl(pattern = regex.label.v[i], x = df.label)
+  }
   
 }
 
@@ -243,129 +261,4 @@ search.terms.df <- data.frame(data_source     = c("load_variables()"),
 
 
 
-# Vars----
-census.year <- 2021
 
-acs5.2019.vars <- tidycensus::load_variables(year = 2019, 
-                                             dataset = "acs5") %>%
-  .[,c("name", "label", "concept")] %>%
-  .[!duplicated(.),] %>%
-  .[complete.cases(.),]
-
-
-acs5.2019.vars %>%
-  .[grepl(unique(search.terms.df$label_pattern), x = .$label, ignore.case = F) & 
-      grepl(search.terms.df$concept_pattern[1], x = .$concept, ignore.case = F),]
-
-acs5.2019.vars[grepl("^B01001", acs5.2019.vars$name),] %>%
-  group_by(concept) %>%
-  summarise(n = n())
-
-# acs5.2019.vars %>%
-#   .[.$label %in% c("Estimate!!Total" ,
-#                    "Estimate!!Total:"),] %>%
-#   #.[grepl("Estimate!!Total|Estimate!!Total:", .$label,ignore.case = F),] %>%
-#   .[grepl(pattern = "FAMILY|FAMILIES", x = .$concept, ignore.case = F) & 
-#       grepl(pattern = "CHILDREN", x = .$concept, ignore.case = F) & 
-#       grepl(pattern = "PRESENCE", x = .$concept, ignore.case = F),] %>%
-#   .$concept %>% unique() %>%
-#   .[order(.)]
-# 
-# acs5.2019.vars$concept %>% 
-#   grep(pattern = "TOTAL POPULATION", x = ., 
-#        ignore.case = F, 
-#        value = T) %>% unique()
-# 
-# grep(pattern = "Male", 
-#      x = acs5.2019.vars$label, 
-#      ignore.case = F, 
-#      value = T) %>% unique()
-
-
-# smartsheet----
-# https://app.smartsheet.com/sheets/Q3HRjppwWFqwFC4PrWMvj2C9967RX3cHhQpXPQ91?view=grid
-# nested heirarchy: BoS Developing CoC System / Racial Equity / Coc Policy and Governance / Data Focused Projects (~ row 1474)
-
-# crosswalks----
-all.nc.counties      <- tigris::counties(state = "NC", cb = T, year = census.year) %>%
-  sf::st_drop_geometry() %>%
-  .[,c(5,6,8,9)]
-co_coc.cw            <- read_csv("https://raw.githubusercontent.com/timbender-ncceh/PIT_HIC/main/crosswalks/county_district_region_crosswalk.csv") 
-co_coc.cw$coc        <- unlist(lapply(X = strsplit(co_coc.cw$`Coc/Region`, " Region "), FUN = first))
-co_coc.cw$region.coc <- as.numeric(unlist(lapply(X = strsplit(co_coc.cw$`Coc/Region`, " Region "), FUN = last)))
-co_coc.cw <- co_coc.cw[,c(2,5,6)]
-
-nc.counties <- full_join(all.nc.counties, 
-                         co_coc.cw,
-                         by = c("NAME" = "County")) %>% as_tibble()
-
-# cleanup
-rm(co_coc.cw, all.nc.counties)
-
-acs5_2019.vars <- tidycensus::load_variables(2019, "acs5")
-acs5_2020.vars <- tidycensus::load_variables(2020, "acs5")
-
-
-# acs5_2019.vars[acs5_2019.vars$name == "B01001_001",]
-# acs5_2019.vars[grepl("\\(hispanic or latino\\)", acs5_2019.vars$concept, ignore.case = T),]$concept %>% unique()
-# acs5_2019.vars[grepl("white alone", acs5_2019.vars$concept, ignore.case = T),]$concept %>% unique()
-# 
-# acs5_2019.vars[grepl("white alone", acs5_2019.vars$label, ignore.case = T),]$concept %>% unique()
-# acs5_2019.vars[grepl("^Estimate!!Total:", acs5_2019.vars$label, ignore.case = T),]$concept %>%
-#   grep("^poverty", ., ignore.case = T, value = T) %>%
-#   unique()
-
-variables_list_2019 <- c(acs5_2019.vars[grepl("POVERTY STATUS IN THE PAST 12 MONTHS BY SEX BY AGE", #"POVERTY STATUS IN THE PAST 12 MONTHS BY SEX BY AGE \\(WHITE ALONE\\)",
-                                              acs5_2019.vars$concept, ignore.case = T) & 
-                                          grepl("^Estimate!!Total:$|^EStimate!!Total:!!Income in the past 12 months below poverty level:$", 
-                                                acs5_2019.vars$label, ignore.case = T),]$name, 
-                         acs5_2019.vars[grepl(paste(c("B01003_", "B02001_", "B01001_", "B03002_"), 
-                                                    sep = "|", collapse = "|"), 
-                                              acs5_2019.vars$name, 
-                                              ignore.case = T),]$name) 
-variables_list_2020 <- NA
-
-
-# download data----
-data.2019_NC <- tidycensus::get_acs(geography = "state", 
-                                    variables  = variables_list_2019, 
-                                    year   = 2019, 
-                                    state  = "NC", 
-                                    survey = "acs5") %>%
-  full_join(., 
-            acs5_2019.vars[,c("name", "label", "concept")], 
-            by = c("variable" = "name"))  
-
-data.2019_NC$var_prefix <- strsplit(data.2019_NC$variable, "_") %>%
-  lapply(., first) %>%
-  unlist()
-
-data.2019_NC$var_suffix <- strsplit(data.2019_NC$variable, "_") %>%
-  lapply(., last) %>%
-  unlist()
-
-data.2020_NC <- tidycensus::get_acs(geography = "state", 
-                                    variables  = variables_list_2020, 
-                                    year   = 2020, 
-                                    state  = "NC", 
-                                    survey = "acs5")
-grep("^poverty status in the past 12 months by age$|^poverty status in the past 12 months by age.*\\)$", 
-     data.2019_NC$concept, 
-     ignore.case = T, value = T) 
-
-
-
-
-# Tidy data----
-# all people, all races
-data.2019_NC[which(data.2019_NC$concept %in% 
-                     grep("^total population$", 
-                          data.2019_NC$concept, 
-                          ignore.case = T, value = T)),]$estimate %>% scales::comma()
-# all people in poverty, all races
-data.2019_NC[which((data.2019_NC$concept %in% 
-                      unique(grep("^poverty status in the past 12 months by age$|^poverty status in the past 12 months by age.*\\)$", 
-                                  data.2019_NC$concept, 
-                                  ignore.case = T, value = T))) ),]$estimate %>% scales::comma()
-
-data.2019_NC[is.na(data.2019_NC$GEOID),]
