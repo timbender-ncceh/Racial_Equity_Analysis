@@ -143,16 +143,23 @@ acs5.2020.vars <- tidycensus::load_variables(year = 2020,
   .[complete.cases(.),]
 
 # search terms vars----
-youth.pattern.label <- c("!!Under 5 years", 
-                         "!!5 to 9 years",
-                         "!!10 to 14 years", 
-                         "!!15 to 17 years", 
-                         "!!18 and 19 years", 
-                         "!!20 years", 
-                         "!!21 years", 
-                         "!!22 to 24 years", 
-                         "!!20 to 24 years")
-
+regex.youth <- c("!!Under 5 years", 
+                 "!!5 to 9 years",
+                 "!!10 to 14 years", 
+                 "!!15 to 17 years", 
+                 "!!18 and 19 years", 
+                 "!!20 years", 
+                 "!!21 years", 
+                 "!!22 to 24 years", 
+                 "!!20 to 24 years")
+regex.race <- c("(WHITE ALONE)", 
+                "(BLACK OR AFRICAN AMERICAN ALONE)", 
+                "(AMERICAN INDIAN AND ALASKA NATIVE ALONE)", 
+                "(ASIAN ALONE)", 
+                "(NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE)", 
+                "(SOME OTHER RACE ALONE)",
+                "(TWO OR MORE RACES)", 
+                "(HISPANIC OR LATINO)")
 
 veteran.pattern.concepts <- NA
 
@@ -172,81 +179,7 @@ get_tables2 <- function(regex.concept,
   
 }
 
-get_tables <- function(filter_race = c("literal hud race", FALSE, NA, NULL), 
-                       filter_age  = c(T,F), 
-                       filter_vet  = c(T,F)){
-  require(dplyr) 
-  require(glue)
-  
-  # RACE
-  if(any(c(is.na(filter_race), 
-           is.null(filter_race), 
-           isFALSE(filter_race), 
-           !tolower(filter_race) %in% tolower(c("White", 
-                                                "Black", 
-                                                "Native American/Alaskan", 
-                                                "Asian/Pacific Islander", 
-                                                "Other/Multi-Racial", 
-                                                "Hispanic"))))){
-    # do this 
-    print("skip race")
-    PATTERN.race <- NA
-    
-  }else{
-    # do the that
-    print("don't skip race")
-    race.pattern.concepts <- data.frame(hud_term    = tolower(c("White", 
-                                                        "Black", 
-                                                        "Native American/Alaskan", 
-                                                        "Asian/Pacific Islander", 
-                                                        "Asian/Pacific Islander", 
-                                                        "Other/Multi-Racial", 
-                                                        "Other/Multi-Racial", 
-                                                        "Hispanic")), 
-                                        census_term = c("WHITE ALONE", 
-                                                        "BLACK OR AFRICAN AMERICAN ALONE", 
-                                                        "AMERICAN INDIAN AND ALASKA NATIVE ALONE", 
-                                                        "ASIAN ALONE", 
-                                                        "NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE", 
-                                                        "SOME OTHER RACE ALONE",
-                                                        "TWO OR MORE RACES", 
-                                                        "HISPANIC OR LATINO"))
-    filter_race.hud <- tolower(filter_race)
-    PATTERN.race <-  paste("SEX BY AGE (", race.pattern.concepts$census_term[race.pattern.concepts$hud_term %in% filter_race.hud,], ")", sep = "")
-    
-    
-  }
-  
-  # YOUTH
-  if(filter_age){
-    youth.pattern.label <- c("!!Under 5 years", 
-                             "!!5 to 9 years",
-                             "!!10 to 14 years", 
-                             "!!15 to 17 years", 
-                             "!!18 and 19 years", 
-                             "!!20 years", 
-                             "!!21 years", 
-                             "!!22 to 24 years", 
-                             "!!20 to 24 years")
-    PATTERN.youth <- paste(youth.pattern.label, sep = "|", collapse = "|")
-  }else{
-    PATTERN.youth <- NA
-  }
-  
-  # VETERAN
-  if(filter_vet){
-    print('do this')
-    PATTERN.vet <- "???"
-  }else{
-    PATTERN.vet <- NA
-  }
-  
-  # in family with children
-  
-  
-  # poverty
-  
-}
+
 
 
 race.pattern.concepts <- c("hispanic or latino")
