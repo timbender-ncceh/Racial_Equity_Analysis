@@ -196,6 +196,55 @@ for(ic in 4:ncol(master.data)){
 View(master.data)
 
 
+
+library(ggplot2)
+
+temp.plot <- master.data[,1:4]
+
+for(i.pop in c("All_People", "Veteran", "Youth")){
+  for(i.year in c(2019,2020)){
+    temp.plot[temp.plot$subpopulation == "Not Hispanic" & 
+                temp.plot$population  == i.pop & 
+                temp.plot$year        == i.year,]$ALL.PPL_total <- temp.plot[temp.plot$subpopulation == "TOTAL" & 
+                                                                               temp.plot$population  == i.pop & 
+                                                                               temp.plot$year        == i.year,]$ALL.PPL_total -
+      temp.plot[temp.plot$subpopulation == "Hispanic" & 
+                  temp.plot$population  == i.pop & 
+                  temp.plot$year        == i.year,]$ALL.PPL_total
+  }
+}
+
+temp.plot$by_type <- NA
+temp.plot$by_type[temp.plot$subpopulation == "TOTAL"] <- "TOTAL"
+temp.plot$by_type[temp.plot$subpopulation %in% c("Hispanic", 
+                                                 "Not Hispanic")] <- "Ethnicity"
+temp.plot$by_type[is.na(temp.plot$by_type)] <- "Race"
+
+library(data.table)
+
+temp.plot %>%
+  as.data.table() %>%
+  dcast(., 
+      by_type + subpopulation + population ~ year, 
+      value.var = "ALL.PPL_total") %>%
+  as.data.frame() %>% 
+  mutate(., 
+         delta = `2020` - `2019`, 
+         #pct_delta2 = delta/`2019`,
+         pct_delta = scales::percent(delta / `2019`,accuracy = 0.1)) %>%
+  ggplot(data = .,
+         aes(x = by_type, y = pct_delta2)) + 
+  geom_point(size = 4, 
+             aes(shape = population,color = subpopulation)) +
+  geom_line(aes(group = subpopulation))+
+  scale_y_continuous(labels = scales::percent, 
+                     breaks = seq(-1,1,by=0.05))
+
+ggplot(data = temp.plot) + 
+  geom_col(aes(x = factor(year), y = ALL.PPL_total, fill = subpopulation, 
+               group = by_type)) +
+  facet_wrap(by_type~population, scales = "free_x")+
+  scale_y_continuous(labels = scales::comma)
 # Data Lookup Tools below----
 
 # acs5.2019.vars <- tidycensus::load_variables(year = 2019, 
