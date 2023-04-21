@@ -157,9 +157,25 @@ youth.pattern.label <- c("!!Under 5 years",
 veteran.pattern.concepts <- NA
 
 
-get_tables <- function(filter_race = c("literal hud race", FALSE, NA, NULL), 
-                       filter_age  = c(T,F)){
+get_tables2 <- function(regex.concept, 
+                        regex.label,
+                        year1 = 2020,
+                        dataset1 = "acs5"){
   require(dplyr)
+  require(tidycensus)
+  # pull master dataset
+  df <- load_variables(year = year1, 
+                       dataset = dataset1) %>%
+    .[,c("name", "label", "concept")] %>%
+    .[!duplicated(.),] %>%
+    .[complete.cases(.),]
+  
+}
+
+get_tables <- function(filter_race = c("literal hud race", FALSE, NA, NULL), 
+                       filter_age  = c(T,F), 
+                       filter_vet  = c(T,F)){
+  require(dplyr) 
   require(glue)
   
   # RACE
@@ -229,12 +245,6 @@ get_tables <- function(filter_race = c("literal hud race", FALSE, NA, NULL),
   
   
   # poverty
-  
-  
-  
-  
-  
-  
   
 }
 
