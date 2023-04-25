@@ -245,6 +245,8 @@ ggplot(data = temp.plot) +
                group = by_type)) +
   facet_wrap(by_type~population, scales = "free_x")+
   scale_y_continuous(labels = scales::comma)
+
+
 # Data Lookup Tools below----
 
 # acs5.2019.vars <- tidycensus::load_variables(year = 2019, 
@@ -258,6 +260,31 @@ acs5.2020.vars <- tidycensus::load_variables(year = 2020,
   .[,c("name", "label", "concept")] %>%
   .[!duplicated(.),] %>%
   .[complete.cases(.),]
+
+
+"VETERAN STATUS FOR THE CIVILIAN POPULATION 18"
+"^Estimate!!Total:$"
+
+library(data.table)
+# how to get each component----
+which.veteran.concept  <- which(grepl("VETERAN STATUS", x = acs5.2020.vars$concept))
+which.families.concept <- which(grepl("^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN", x = acs5.2020.vars$concept))
+which.poverty.concept  <- which(grepl("^POVERTY STATUS IN THE PAST 12 MONTHS BY S{0,1}E{0,1}X{0,1} {0,1}B{0,1}Y{0,1} {0,1}AGE$|^POVERTY STATUS IN THE PAST 12 MONTHS BY S{0,1}E{0,1}X{0,1} {0,1}B{0,1}Y{0,1} {0,1}AGE [^B]", x = acs5.2020.vars$concept))
+
+acs5.2020.vars[1:nrow(acs5.2020.vars) %in% which.poverty.concept,]$concept %>% unique()
+
+acs5.2020.vars[1:nrow(acs5.2020.vars) %in% which.poverty.concept,c("concept", "label")] %>%
+  .[!duplicated(.),] %>%
+  as.data.table() %>%
+  dcast(., 
+        label~concept, fun.aggregate = length, fill = 0) %>%
+  as.data.table() %>%
+  as_tibble() %>%
+  .$label
+
+
+master.table[master.table$population == "Veteran",]
+colnames(master.table)
 
 # search terms vars----
 regex.youth       <- c("!!Under 5 years", 
