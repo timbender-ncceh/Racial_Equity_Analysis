@@ -120,23 +120,14 @@ master.table$IN.POV_total[master.table$population == "All_People" & master.table
 master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
 master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
 
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
-
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
-master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- "B17010_004 + B17010_011 + B17010_017"
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- "B17010A_004 + B17010A_011 + B17010A_017"
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- "B17010D_004 + B17010D_011 + B17010D_017 + B17010E_004 + B17010E_011 + B17010E_017"
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- "B17010B_004 + B17010B_011 + B17010B_017"
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- "B17010C_004 + B17010C_011 + B17010C_017"
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- "B17010F_004 + B17010F_011 + B17010F_017 + B17010G_004 + B17010G_011 + B17010G_017"
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- "B17010I_004 + B17010I_011 + B17010I_017"
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- "(B17010_004 + B17010_011 + B17010_017) - (B17010I_004 + B17010I_011 + B17010I_017)"
 
 master.table$ALL.PPL_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "TOTAL"]                   <- NA
 master.table$ALL.PPL_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "White"]                   <- NA
@@ -202,15 +193,50 @@ acs5.2020.vars <- tidycensus::load_variables(2020, "acs5")
 acs5.2019.vars <- tidycensus::load_variables(2019, "acs5")
 
 
-
-acs5.2020.vars %>%
+# table name makeup definitions
+inPoverty_inFamily_totalPop <- acs5.2020.vars %>%
   .[grepl(pattern = "^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN$|^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN \\(.*\\)$", 
           x = .$concept),] %>%
   .[grepl(pattern = "below poverty level", x = .$label),] %>%
-  .[grepl(pattern = "With related children.*under 18 years:$", x = .$label),]
+  .[grepl(pattern = "With related children.*under 18 years:$", x = .$label),c("name", "concept", "label")]
 
-"^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN$|^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN \\(.*\\)$"
-"^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE$|^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE \\(.*\\)$"
+inPoverty_inFamily_totalPop <- inPoverty_inFamily_totalPop %>%
+  mutate(., 
+         race_name = ifelse(test = grepl("\\(", x = concept), yes = gsub(pattern = "^.*\\(|\\).*$", "", concept), no = "TOTAL"),  
+         race_code = substr(x = name, 
+                            start = (nchar(name) - 4), 
+                            stop  = (nchar(name) - 4)), 
+         race_code = ifelse(race_code == 0, "", race_code), 
+         #varsuffix_name = NA, 
+         varzsuffix_code = unlist(lapply(strsplit(name, "_"),last)) )
+
+
+inPoverty_inFamily_totalPop[,c("name", 
+                               "race_name",
+                               "race_code", 
+                               "varzsuffix_code")] %>%
+  as.data.table() %>% 
+  dcast(., 
+        race_name ~ varzsuffix_code, 
+        value.var = "name") %>%
+  as.data.frame() %>%
+  as_tibble() %>%
+  mutate(., 
+         table_txt = paste(`004`, `011`, `017`, sep = " + ")) %>%
+  .[colnames(.) %in% c("race_name", "table_txt")]
+
+unique(inPoverty_inFamily_totalPop$varzsuffix_code)
+
+
+
+
+
+acs5.2020.vars %>%
+  .[grepl(pattern = "^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE$|^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE \\(.*\\)$", 
+          x = .$concept),] %>%
+  .[grepl(pattern = "below poverty level:$", x = .$label),] 
+
+
 acs5.2020.vars$concept %>%
   grep("^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN$|^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN \\(.*\\)$", ., value = T) %>% unique
 
