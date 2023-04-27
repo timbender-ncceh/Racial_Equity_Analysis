@@ -10,6 +10,25 @@ library(sf)
 
 rm(list=ls());cat('\f');gc()
 
+# functions----
+get_NA_cell <- function(df){
+  out <- F
+  while(out == F){
+    
+    temp.row <- sample(1:nrow(df), size = 1)
+    temp.col <- sample(1:ncol(df), size = 1)
+    
+    if(is.na(unname(unlist(df[temp.row,temp.col])))){
+      out <- T
+      outR <- c(row = temp.row, col = temp.col)
+    }
+    
+    rm(temp.row, temp.col)
+    
+  }
+  return(outR)
+}
+
 # SetWD----
 prime.wd    <- "C:/Users/TimBender/Documents/R/ncceh/projects/racial_equity_analysis"
 hudtools.wd <- "C:/Users/TimBender/Documents/R/ncceh/projects/racial_equity_analysis/hud_tools"
@@ -54,6 +73,8 @@ master.table <- expand.grid(population = c("All_People", "Youth", "Veteran"),
   as_tibble()
 
 
+# to do- double-check all tables related ot age to make sure they all cut-off at 24 and under not 34 and under-----
+
 master.table$ALL.PPL_total[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"] <- "B01001_001"
 master.table$ALL.PPL_total[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"] <- "B01001D_001 + B01001E_001"
 master.table$ALL.PPL_total[master.table$population == "All_People" & master.table$subpopulation == "Black"] <- "B01001B_001"
@@ -90,27 +111,222 @@ master.table$ALL.PPL_total[master.table$population == "Youth" & master.table$sub
 master.table$ALL.PPL_total[master.table$population == "Youth" & master.table$subpopulation == "Hispanic"]                <- "B01001I_003 + B01001I_004 + B01001I_005 + B01001I_006 + B01001I_007 + B01001I_008 + B01001I_018 + B01001I_019 + B01001I_020 + B01001I_021 + B01001I_022 + B01001I_023"
 master.table$ALL.PPL_total[master.table$population == "Youth" & master.table$subpopulation == "Not Hispanic"]            <- "(B01001_003 + B01001_004 + B01001_005 + B01001_006 + B01001_007 + B01001_008 + B01001_009 + B01001_010 + B01001_027 + B01001_028 + B01001_029 + B01001_030 + B01001_031 + B01001_032 + B01001_033 + B01001_034) - (B01001I_003 + B01001I_004 + B01001I_005 + B01001I_006 + B01001I_007 + B01001I_008 + B01001I_018 + B01001I_019 + B01001I_020 + B01001I_021 + B01001I_022 + B01001I_023)"
 
-# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
-# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
-# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
-# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
-# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
-# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
-# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
-# master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
-# 
-# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
-# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
-# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
-# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
-# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
-# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
-# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
-# master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
+master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
+master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
+master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
+master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
+master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
+master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
+master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
+master.table$IN.POV_total[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
+
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
+
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "TOTAL"]                   <- ""
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "White"]                   <- ""
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Asian/Pacific Islander"]  <- " + "
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Black"]                   <- ""
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Native American/Alaskan"] <- ""
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Other/Multi-Racial"]      <- " + "
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Hispanic"]                <- ""
+master.table$IN.POV_in.fwc[master.table$population == "All_People" & master.table$subpopulation == "Not Hispanic"]            <- " - "
+
+master.table$ALL.PPL_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "TOTAL"]                   <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "White"]                   <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Asian/Pacific Islander"]  <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Black"]                   <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Native American/Alaskan"] <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Other/Multi-Racial"]      <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Hispanic"]                <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Not Hispanic"]            <- NA
+
+master.table$IN.POV_total[master.table$population == "Veteran" & master.table$subpopulation == "TOTAL"]                   <- NA
+master.table$IN.POV_total[master.table$population == "Veteran" & master.table$subpopulation == "White"]                   <- NA
+master.table$IN.POV_total[master.table$population == "Veteran" & master.table$subpopulation == "Asian/Pacific Islander"]  <- NA
+master.table$IN.POV_total[master.table$population == "Veteran" & master.table$subpopulation == "Black"]                   <- NA
+master.table$IN.POV_total[master.table$population == "Veteran" & master.table$subpopulation == "Native American/Alaskan"] <- NA
+master.table$IN.POV_total[master.table$population == "Veteran" & master.table$subpopulation == "Other/Multi-Racial"]      <- NA
+master.table$IN.POV_total[master.table$population == "Veteran" & master.table$subpopulation == "Hispanic"]                <- NA
+master.table$IN.POV_total[master.table$population == "Veteran" & master.table$subpopulation == "Not Hispanic"]            <- NA
+
+master.table$IN.POV_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "TOTAL"]                   <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "White"]                   <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Asian/Pacific Islander"]  <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Black"]                   <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Native American/Alaskan"] <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Other/Multi-Racial"]      <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Hispanic"]                <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Veteran" & master.table$subpopulation == "Not Hispanic"]            <- NA
+
+master.table$ALL.PPL_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "TOTAL"]                   <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "White"]                   <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Asian/Pacific Islander"]  <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Black"]                   <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Native American/Alaskan"] <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Other/Multi-Racial"]      <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Hispanic"]                <- NA
+master.table$ALL.PPL_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Not Hispanic"]            <- NA
+
+master.table$IN.POV_total[master.table$population == "Youth" & master.table$subpopulation == "TOTAL"]                   <- NA
+master.table$IN.POV_total[master.table$population == "Youth" & master.table$subpopulation == "White"]                   <- NA
+master.table$IN.POV_total[master.table$population == "Youth" & master.table$subpopulation == "Asian/Pacific Islander"]  <- NA
+master.table$IN.POV_total[master.table$population == "Youth" & master.table$subpopulation == "Black"]                   <- NA
+master.table$IN.POV_total[master.table$population == "Youth" & master.table$subpopulation == "Native American/Alaskan"] <- NA
+master.table$IN.POV_total[master.table$population == "Youth" & master.table$subpopulation == "Other/Multi-Racial"]      <- NA
+master.table$IN.POV_total[master.table$population == "Youth" & master.table$subpopulation == "Hispanic"]                <- NA
+master.table$IN.POV_total[master.table$population == "Youth" & master.table$subpopulation == "Not Hispanic"]            <- NA
+
+master.table$IN.POV_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "TOTAL"]                   <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "White"]                   <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Asian/Pacific Islander"]  <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Black"]                   <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Native American/Alaskan"] <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Other/Multi-Racial"]      <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Hispanic"]                <- NA
+master.table$IN.POV_in.fwc[master.table$population == "Youth" & master.table$subpopulation == "Not Hispanic"]            <- NA
 
 master.table %>% as_tibble()
 
 write_csv(master.table, file = "census_table_source_info.csv")
+
+
+# test----
+acs5.2020.vars <- tidycensus::load_variables(2020, "acs5")
+acs5.2019.vars <- tidycensus::load_variables(2019, "acs5")
+
+
+
+acs5.2020.vars %>%
+  .[grepl(pattern = "^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN$|^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN \\(.*\\)$", 
+          x = .$concept),] %>%
+  .[grepl(pattern = "below poverty level", x = .$label),] %>%
+  .[grepl(pattern = "With related children.*under 18 years:$", x = .$label),]
+
+"^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN$|^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN \\(.*\\)$"
+"^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE$|^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE \\(.*\\)$"
+acs5.2020.vars$concept %>%
+  grep("^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN$|^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN \\(.*\\)$", ., value = T) %>% unique
+
+
+c21001a.2020 <- tidycensus::get_acs(geography   = "county", 
+                                    table       = "C21001A", 
+                                    year        = 2020, 
+                                    state       = "NC", 
+                                    summary_var = NULL, 
+                                    survey      = "acs5") %>%
+  left_join(., 
+            y = acs5.2020.vars, 
+            by = c("variable" = "name"))
+c21001b.2020 <- tidycensus::get_acs(geography   = "county", 
+                                    table       = "C21001B", 
+                                    year        = 2020, 
+                                    state       = "NC", 
+                                    summary_var = NULL, 
+                                    survey      = "acs5") %>%
+  left_join(., 
+            y = acs5.2020.vars, 
+            by = c("variable" = "name"))
+c21001c.2020 <- tidycensus::get_acs(geography   = "county", 
+                                    table       = "C21001C", 
+                                    year        = 2020, 
+                                    state       = "NC", 
+                                    summary_var = NULL, 
+                                    survey      = "acs5") %>%
+  left_join(., 
+            y = acs5.2020.vars, 
+            by = c("variable" = "name"))
+c21001d.2020 <- tidycensus::get_acs(geography   = "county", 
+                                    table       = "C21001D", 
+                                    year        = 2020, 
+                                    state       = "NC", 
+                                    summary_var = NULL, 
+                                    survey      = "acs5") %>%
+  left_join(., 
+            y = acs5.2020.vars, 
+            by = c("variable" = "name"))
+c21001e.2020 <- tidycensus::get_acs(geography   = "county", 
+                                    table       = "C21001E", 
+                                    year        = 2020, 
+                                    state       = "NC", 
+                                    summary_var = NULL, 
+                                    survey      = "acs5") %>%
+  left_join(., 
+            y = acs5.2020.vars, 
+            by = c("variable" = "name"))
+c21001f.2020 <- tidycensus::get_acs(geography   = "county", 
+                                    table       = "C21001F", 
+                                    year        = 2020, 
+                                    state       = "NC", 
+                                    summary_var = NULL, 
+                                    survey      = "acs5") %>%
+  left_join(., 
+            y = acs5.2020.vars, 
+            by = c("variable" = "name"))
+c21001i.2020 <- tidycensus::get_acs(geography   = "county", 
+                                    table       = "C21001I", 
+                                    year        = 2020, 
+                                    state       = "NC", 
+                                    summary_var = NULL, 
+                                    survey      = "acs5") %>%
+  left_join(., 
+            y = acs5.2020.vars, 
+            by = c("variable" = "name"))
+
+
+c21001.2020 <- rbind(c21001a.2020, 
+                     c21001b.2020, 
+                     c21001c.2020, 
+                     c21001d.2020, 
+                     c21001e.2020, 
+                     c21001f.2020, 
+                     c21001i.2020)
+
+
+c21001.2020$label %>% unique()
+
+
+
+
+youth.label <- grep("to 24 years", ignore.case = T, x = acs5.2020.vars$label, value = T) %>% unique()
+vet.concept <- grep("veteran status", ignore.case = T, x = acs5.2020.vars$concept, value = T) %>% unique()
+race.concept <- grep("\\(WHITE ALONE\\)$", ignore.case = T, x = acs5.2020.vars$concept, value = T) %>% unique()
+
+famwchi.label <- grep("!!with own children", ignore.case = T, x = acs5.2020.vars$label, value = T) %>% unique
+
+
+
+
+expand.grid(var1 = c("nothing", 
+                     "youth", 
+                     "veteran", 
+                     "race", 
+                     "famWithChild"), 
+            var2 = c("nothing", 
+                     "youth", 
+                     "veteran", 
+                     "race", 
+                     "famWithChild"), 
+            var3 = c("nothing", 
+                     "youth", 
+                     "veteran", 
+                     "race", 
+                     "famWithChild"), 
+            var4 = c("nothing", 
+                     "youth", 
+                     "veteran", 
+                     "race", 
+                     "famWithChild"))
+
+
+
+
 
 
 # Data Pullsdown----
@@ -246,6 +462,11 @@ ggplot(data = temp.plot) +
   facet_wrap(by_type~population, scales = "free_x")+
   scale_y_continuous(labels = scales::comma)
 
+# data thing----
+NA_cell <- get_NA_cell(master.table);cat('\f')
+master.table[NA_cell["row"],c("population", "subpopulation")]
+colnames(master.table)[NA_cell["col"]]
+
 
 # Data Lookup Tools below----
 
@@ -270,21 +491,39 @@ library(data.table)
 which.veteran.concept  <- which(grepl("VETERAN STATUS", x = acs5.2020.vars$concept))
 which.families.concept <- which(grepl("^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN", x = acs5.2020.vars$concept))
 which.poverty.concept  <- which(grepl("^POVERTY STATUS IN THE PAST 12 MONTHS BY S{0,1}E{0,1}X{0,1} {0,1}B{0,1}Y{0,1} {0,1}AGE$|^POVERTY STATUS IN THE PAST 12 MONTHS BY S{0,1}E{0,1}X{0,1} {0,1}B{0,1}Y{0,1} {0,1}AGE [^B]", x = acs5.2020.vars$concept))
+which.youth.label      <- which(grepl(paste(c("Estimate!!Total:!!Male:!!Under 5 years", "Estimate!!Total:!!Male:!!5 to 9 years", "Estimate!!Total:!!Male:!!10 to 14 years", 
+                                      "Estimate!!Total:!!Male:!!15 to 17 years", "Estimate!!Total:!!Male:!!18 and 19 years", "Estimate!!Total:!!Male:!!20 years", 
+                                      "Estimate!!Total:!!Male:!!21 years", "Estimate!!Total:!!Male:!!22 to 24 years", "Estimate!!Total:!!Male:!!25 to 29 years", 
+                                      "Estimate!!Total:!!Male:!!30 to 34 years", "Estimate!!Total:!!Female:!!Under 5 years", "Estimate!!Total:!!Female:!!5 to 9 years", 
+                                      "Estimate!!Total:!!Female:!!10 to 14 years", "Estimate!!Total:!!Female:!!15 to 17 years", "Estimate!!Total:!!Female:!!18 and 19 years", 
+                                      "Estimate!!Total:!!Female:!!20 years", "Estimate!!Total:!!Female:!!21 years", "Estimate!!Total:!!Female:!!22 to 24 years", 
+                                      "Estimate!!Total:!!Female:!!25 to 29 years", "Estimate!!Total:!!Female:!!30 to 34 years", "Estimate!!Total:!!Male:!!20 to 24 years", 
+                                      "Estimate!!Total:!!Female:!!20 to 24 years"), sep = "|", collapse = "|"), 
+                                      x = acs5.2020.vars$label))
 
-acs5.2020.vars[1:nrow(acs5.2020.vars) %in% which.poverty.concept,]$concept %>% unique()
+# veterans in families with children 
+unique(acs5.2020.vars[grepl("^SEX BY AGE BY VETERAN STATUS FOR THE CIVILIAN POPULATION 18 YEARS AND OVER", 
+                            acs5.2020.vars$concept),]$concept)
+unique(acs5.2020.vars[grepl("FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN", 
+                            x = acs5.2020.vars$concept),]$concept)
 
-acs5.2020.vars[1:nrow(acs5.2020.vars) %in% which.poverty.concept,c("concept", "label")] %>%
-  .[!duplicated(.),] %>%
-  as.data.table() %>%
-  dcast(., 
-        label~concept, fun.aggregate = length, fill = 0) %>%
-  as.data.table() %>%
-  as_tibble() %>%
+
+acs5.2020.vars[grepl("child", acs5.2020.vars$concept, ignore.case = T) & 
+  grepl("veteran*", acs5.2020.vars$concept, ignore.case = T),] %>%
+  group_by(concept,label) %>% summarise() %>%
   .$label
 
-
-master.table[master.table$population == "Veteran",]
-colnames(master.table)
+tidycensus::get_acs(geography = "state", 
+                    variables = NULL, 
+                    table     = "B01001", 
+                    year      = 2020, 
+                    state     = "NC", 
+                    county    = NULL, 
+                    geometry  = F, 
+                    summary_var = NULL, 
+                    key         = NULL, 
+                    survey      = "acs5", 
+                    show_call   = F)
 
 # search terms vars----
 regex.youth       <- c("!!Under 5 years", 
