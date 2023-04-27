@@ -38,6 +38,10 @@ r_code.wd   <- "C:/Users/TimBender/Documents/R/ncceh/projects/racial_equity_anal
 
 setwd(prime.wd)
 
+# vars----
+
+gh.census.data <- "https://raw.githubusercontent.com/timbender-ncceh/Racial_Equity_Analysis/main/raw_county_data.csv"
+
 # Master Table Design----
 master.table <- expand.grid(population = c("All_People", "Youth", "Veteran"), 
                             year = c(2020,2019),
@@ -188,209 +192,259 @@ master.table %>% as_tibble()
 write_csv(master.table, file = "census_table_source_info.csv")
 
 
-# test----
-acs5.2020.vars <- tidycensus::load_variables(2020, "acs5")
-acs5.2019.vars <- tidycensus::load_variables(2019, "acs5")
-
-
-# table name makeup definitions
-inPoverty_inFamily_totalPop <- acs5.2020.vars %>%
-  .[grepl(pattern = "^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN$|^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN \\(.*\\)$", 
-          x = .$concept),] %>%
-  .[grepl(pattern = "below poverty level", x = .$label),] %>%
-  .[grepl(pattern = "With related children.*under 18 years:$", x = .$label),c("name", "concept", "label")]
-
-inPoverty_inFamily_totalPop <- inPoverty_inFamily_totalPop %>%
-  mutate(., 
-         race_name = ifelse(test = grepl("\\(", x = concept), yes = gsub(pattern = "^.*\\(|\\).*$", "", concept), no = "TOTAL"),  
-         race_code = substr(x = name, 
-                            start = (nchar(name) - 4), 
-                            stop  = (nchar(name) - 4)), 
-         race_code = ifelse(race_code == 0, "", race_code), 
-         #varsuffix_name = NA, 
-         varzsuffix_code = unlist(lapply(strsplit(name, "_"),last)) )
-
-
-inPoverty_inFamily_totalPop[,c("name", 
-                               "race_name",
-                               "race_code", 
-                               "varzsuffix_code")] %>%
-  as.data.table() %>% 
-  dcast(., 
-        race_name ~ varzsuffix_code, 
-        value.var = "name") %>%
-  as.data.frame() %>%
-  as_tibble() %>%
-  mutate(., 
-         table_txt = paste(`004`, `011`, `017`, sep = " + ")) %>%
-  .[colnames(.) %in% c("race_name", "table_txt")]
-
-unique(inPoverty_inFamily_totalPop$varzsuffix_code)
-
-
-
-# in proverty (just total; not "IN" and not "not in" family)----
-inPoverty_totalPop <- acs5.2020.vars %>%
-  .[grepl(pattern = "^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE$|^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE \\(.*\\)$", 
-          x = .$concept),] %>%
-  .[grepl(pattern = "below poverty level", x = .$label),] %>%
-  .[grepl(pattern = "below poverty level:$", x = .$label),c("name", "concept", "label")]
-
-inPoverty_totalPop <- inPoverty_totalPop %>%
-  mutate(., 
-         race_name = ifelse(test = grepl("\\(", x = concept), yes = gsub(pattern = "^.*\\(|\\).*$", "", concept), no = "TOTAL"),  
-         race_code = substr(x = name, 
-                            start = (nchar(name) - 4), 
-                            stop  = (nchar(name) - 4)), 
-         race_code = ifelse(race_code == 0, "", race_code), 
-         #varsuffix_name = NA, 
-         varzsuffix_code = unlist(lapply(strsplit(name, "_"),last)) )
-
-
-inPoverty_totalPop[,c("name", 
-                      "race_name",
-                      "race_code", 
-                      "varzsuffix_code")] %>%
-  as.data.table() %>% 
-  dcast(., 
-        race_name ~ varzsuffix_code, 
-        value.var = "name") %>%
-  as.data.frame() %>%
-  as_tibble() %>%
-  mutate(., 
-         table_txt = paste(`002`, sep = " + ")) %>%
-  .[colnames(.) %in% c("race_name", "table_txt")]
-
-unique(inPoverty_totalPop$varzsuffix_code)
-
-
-
+# # test----
+# acs5.2020.vars <- tidycensus::load_variables(2020, "acs5")
+# acs5.2019.vars <- tidycensus::load_variables(2019, "acs5")
 # 
-# acs5.2020.vars %>%
+# 
+# # table name makeup definitions
+# inPoverty_inFamily_totalPop <- acs5.2020.vars %>%
+#   .[grepl(pattern = "^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN$|^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN \\(.*\\)$", 
+#           x = .$concept),] %>%
+#   .[grepl(pattern = "below poverty level", x = .$label),] %>%
+#   .[grepl(pattern = "With related children.*under 18 years:$", x = .$label),c("name", "concept", "label")]
+# 
+# inPoverty_inFamily_totalPop <- inPoverty_inFamily_totalPop %>%
+#   mutate(., 
+#          race_name = ifelse(test = grepl("\\(", x = concept), yes = gsub(pattern = "^.*\\(|\\).*$", "", concept), no = "TOTAL"),  
+#          race_code = substr(x = name, 
+#                             start = (nchar(name) - 4), 
+#                             stop  = (nchar(name) - 4)), 
+#          race_code = ifelse(race_code == 0, "", race_code), 
+#          #varsuffix_name = NA, 
+#          varzsuffix_code = unlist(lapply(strsplit(name, "_"),last)) )
+# 
+# 
+# inPoverty_inFamily_totalPop[,c("name", 
+#                                "race_name",
+#                                "race_code", 
+#                                "varzsuffix_code")] %>%
+#   as.data.table() %>% 
+#   dcast(., 
+#         race_name ~ varzsuffix_code, 
+#         value.var = "name") %>%
+#   as.data.frame() %>%
+#   as_tibble() %>%
+#   mutate(., 
+#          table_txt = paste(`004`, `011`, `017`, sep = " + ")) %>%
+#   .[colnames(.) %in% c("race_name", "table_txt")]
+# 
+# unique(inPoverty_inFamily_totalPop$varzsuffix_code)
+# 
+# 
+# 
+# # in proverty (just total; not "IN" and not "not in" family)----
+# inPoverty_totalPop <- acs5.2020.vars %>%
 #   .[grepl(pattern = "^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE$|^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE \\(.*\\)$", 
 #           x = .$concept),] %>%
-#   .[grepl(pattern = "below poverty level:$", x = .$label),] 
+#   .[grepl(pattern = "below poverty level", x = .$label),] %>%
+#   .[grepl(pattern = "below poverty level:$", x = .$label),c("name", "concept", "label")]
+# 
+# inPoverty_totalPop <- inPoverty_totalPop %>%
+#   mutate(., 
+#          race_name = ifelse(test = grepl("\\(", x = concept), yes = gsub(pattern = "^.*\\(|\\).*$", "", concept), no = "TOTAL"),  
+#          race_code = substr(x = name, 
+#                             start = (nchar(name) - 4), 
+#                             stop  = (nchar(name) - 4)), 
+#          race_code = ifelse(race_code == 0, "", race_code), 
+#          #varsuffix_name = NA, 
+#          varzsuffix_code = unlist(lapply(strsplit(name, "_"),last)) )
 # 
 # 
-# acs5.2020.vars$concept %>%
-#   grep("^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN$|^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN \\(.*\\)$", ., value = T) %>% unique
-
-
-c21001a.2020 <- tidycensus::get_acs(geography   = "county", 
-                                    table       = "C21001A", 
-                                    year        = 2020, 
-                                    state       = "NC", 
-                                    summary_var = NULL, 
-                                    survey      = "acs5") %>%
-  left_join(., 
-            y = acs5.2020.vars, 
-            by = c("variable" = "name"))
-c21001b.2020 <- tidycensus::get_acs(geography   = "county", 
-                                    table       = "C21001B", 
-                                    year        = 2020, 
-                                    state       = "NC", 
-                                    summary_var = NULL, 
-                                    survey      = "acs5") %>%
-  left_join(., 
-            y = acs5.2020.vars, 
-            by = c("variable" = "name"))
-c21001c.2020 <- tidycensus::get_acs(geography   = "county", 
-                                    table       = "C21001C", 
-                                    year        = 2020, 
-                                    state       = "NC", 
-                                    summary_var = NULL, 
-                                    survey      = "acs5") %>%
-  left_join(., 
-            y = acs5.2020.vars, 
-            by = c("variable" = "name"))
-c21001d.2020 <- tidycensus::get_acs(geography   = "county", 
-                                    table       = "C21001D", 
-                                    year        = 2020, 
-                                    state       = "NC", 
-                                    summary_var = NULL, 
-                                    survey      = "acs5") %>%
-  left_join(., 
-            y = acs5.2020.vars, 
-            by = c("variable" = "name"))
-c21001e.2020 <- tidycensus::get_acs(geography   = "county", 
-                                    table       = "C21001E", 
-                                    year        = 2020, 
-                                    state       = "NC", 
-                                    summary_var = NULL, 
-                                    survey      = "acs5") %>%
-  left_join(., 
-            y = acs5.2020.vars, 
-            by = c("variable" = "name"))
-c21001f.2020 <- tidycensus::get_acs(geography   = "county", 
-                                    table       = "C21001F", 
-                                    year        = 2020, 
-                                    state       = "NC", 
-                                    summary_var = NULL, 
-                                    survey      = "acs5") %>%
-  left_join(., 
-            y = acs5.2020.vars, 
-            by = c("variable" = "name"))
-c21001i.2020 <- tidycensus::get_acs(geography   = "county", 
-                                    table       = "C21001I", 
-                                    year        = 2020, 
-                                    state       = "NC", 
-                                    summary_var = NULL, 
-                                    survey      = "acs5") %>%
-  left_join(., 
-            y = acs5.2020.vars, 
-            by = c("variable" = "name"))
-
-
-c21001.2020 <- rbind(c21001a.2020, 
-                     c21001b.2020, 
-                     c21001c.2020, 
-                     c21001d.2020, 
-                     c21001e.2020, 
-                     c21001f.2020, 
-                     c21001i.2020)
-
-
-c21001.2020$label %>% unique()
-
-
-
-
-youth.label <- grep("to 24 years", ignore.case = T, x = acs5.2020.vars$label, value = T) %>% unique()
-vet.concept <- grep("veteran status", ignore.case = T, x = acs5.2020.vars$concept, value = T) %>% unique()
-race.concept <- grep("\\(WHITE ALONE\\)$", ignore.case = T, x = acs5.2020.vars$concept, value = T) %>% unique()
-
-famwchi.label <- grep("!!with own children", ignore.case = T, x = acs5.2020.vars$label, value = T) %>% unique
-
-
-
-
-expand.grid(var1 = c("nothing", 
-                     "youth", 
-                     "veteran", 
-                     "race", 
-                     "famWithChild"), 
-            var2 = c("nothing", 
-                     "youth", 
-                     "veteran", 
-                     "race", 
-                     "famWithChild"), 
-            var3 = c("nothing", 
-                     "youth", 
-                     "veteran", 
-                     "race", 
-                     "famWithChild"), 
-            var4 = c("nothing", 
-                     "youth", 
-                     "veteran", 
-                     "race", 
-                     "famWithChild"))
-
-
+# inPoverty_totalPop[,c("name", 
+#                       "race_name",
+#                       "race_code", 
+#                       "varzsuffix_code")] %>%
+#   as.data.table() %>% 
+#   dcast(., 
+#         race_name ~ varzsuffix_code, 
+#         value.var = "name") %>%
+#   as.data.frame() %>%
+#   as_tibble() %>%
+#   mutate(., 
+#          table_txt = paste(`002`, sep = " + ")) %>%
+#   .[colnames(.) %in% c("race_name", "table_txt")]
+# 
+# unique(inPoverty_totalPop$varzsuffix_code)
+# 
+# 
+# 
+# # 
+# # acs5.2020.vars %>%
+# #   .[grepl(pattern = "^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE$|^POVERTY STATUS IN THE PAST 12 MONTHS BY AGE \\(.*\\)$", 
+# #           x = .$concept),] %>%
+# #   .[grepl(pattern = "below poverty level:$", x = .$label),] 
+# # 
+# # 
+# # acs5.2020.vars$concept %>%
+# #   grep("^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN$|^POVERTY STATUS IN THE PAST 12 MONTHS OF FAMILIES BY FAMILY TYPE BY PRESENCE OF RELATED CHILDREN UNDER 18 YEARS BY AGE OF RELATED CHILDREN \\(.*\\)$", ., value = T) %>% unique
+# 
+# 
+# c21001a.2020 <- tidycensus::get_acs(geography   = "county", 
+#                                     table       = "C21001A", 
+#                                     year        = 2020, 
+#                                     state       = "NC", 
+#                                     summary_var = NULL, 
+#                                     survey      = "acs5") %>%
+#   left_join(., 
+#             y = acs5.2020.vars, 
+#             by = c("variable" = "name"))
+# c21001b.2020 <- tidycensus::get_acs(geography   = "county", 
+#                                     table       = "C21001B", 
+#                                     year        = 2020, 
+#                                     state       = "NC", 
+#                                     summary_var = NULL, 
+#                                     survey      = "acs5") %>%
+#   left_join(., 
+#             y = acs5.2020.vars, 
+#             by = c("variable" = "name"))
+# c21001c.2020 <- tidycensus::get_acs(geography   = "county", 
+#                                     table       = "C21001C", 
+#                                     year        = 2020, 
+#                                     state       = "NC", 
+#                                     summary_var = NULL, 
+#                                     survey      = "acs5") %>%
+#   left_join(., 
+#             y = acs5.2020.vars, 
+#             by = c("variable" = "name"))
+# c21001d.2020 <- tidycensus::get_acs(geography   = "county", 
+#                                     table       = "C21001D", 
+#                                     year        = 2020, 
+#                                     state       = "NC", 
+#                                     summary_var = NULL, 
+#                                     survey      = "acs5") %>%
+#   left_join(., 
+#             y = acs5.2020.vars, 
+#             by = c("variable" = "name"))
+# c21001e.2020 <- tidycensus::get_acs(geography   = "county", 
+#                                     table       = "C21001E", 
+#                                     year        = 2020, 
+#                                     state       = "NC", 
+#                                     summary_var = NULL, 
+#                                     survey      = "acs5") %>%
+#   left_join(., 
+#             y = acs5.2020.vars, 
+#             by = c("variable" = "name"))
+# c21001f.2020 <- tidycensus::get_acs(geography   = "county", 
+#                                     table       = "C21001F", 
+#                                     year        = 2020, 
+#                                     state       = "NC", 
+#                                     summary_var = NULL, 
+#                                     survey      = "acs5") %>%
+#   left_join(., 
+#             y = acs5.2020.vars, 
+#             by = c("variable" = "name"))
+# c21001i.2020 <- tidycensus::get_acs(geography   = "county", 
+#                                     table       = "C21001I", 
+#                                     year        = 2020, 
+#                                     state       = "NC", 
+#                                     summary_var = NULL, 
+#                                     survey      = "acs5") %>%
+#   left_join(., 
+#             y = acs5.2020.vars, 
+#             by = c("variable" = "name"))
+# 
+# 
+# c21001.2020 <- rbind(c21001a.2020, 
+#                      c21001b.2020, 
+#                      c21001c.2020, 
+#                      c21001d.2020, 
+#                      c21001e.2020, 
+#                      c21001f.2020, 
+#                      c21001i.2020)
+# 
+# 
+# c21001.2020$label %>% unique()
+# 
+# 
+# 
+# 
+# youth.label <- grep("to 24 years", ignore.case = T, x = acs5.2020.vars$label, value = T) %>% unique()
+# vet.concept <- grep("veteran status", ignore.case = T, x = acs5.2020.vars$concept, value = T) %>% unique()
+# race.concept <- grep("\\(WHITE ALONE\\)$", ignore.case = T, x = acs5.2020.vars$concept, value = T) %>% unique()
+# 
+# famwchi.label <- grep("!!with own children", ignore.case = T, x = acs5.2020.vars$label, value = T) %>% unique
+# 
+# 
+# 
+# 
+# expand.grid(var1 = c("nothing", 
+#                      "youth", 
+#                      "veteran", 
+#                      "race", 
+#                      "famWithChild"), 
+#             var2 = c("nothing", 
+#                      "youth", 
+#                      "veteran", 
+#                      "race", 
+#                      "famWithChild"), 
+#             var3 = c("nothing", 
+#                      "youth", 
+#                      "veteran", 
+#                      "race", 
+#                      "famWithChild"), 
+#             var4 = c("nothing", 
+#                      "youth", 
+#                      "veteran", 
+#                      "race", 
+#                      "famWithChild"))
+# 
+# 
 
 
 
 
 # Data Pullsdown----
+
+tbl.names <- NULL
+for(ic in 4:ncol(master.table)){
+  for(ir in 1:nrow(master.table)){
+    
+    if(!is.na(unname(unlist(master.table[ir,ic])))){
+      tbl.names <- unique(c(tbl.names, 
+                     unique(gsub("_.*$", "", 
+                                 unlist(strsplit(x = unname(unlist(master.table[ir,ic])), 
+                                                 split = " "))[nchar(unlist(strsplit(x = unname(unlist(master.table[ir,ic])), 
+                                                                                     split = " "))) > 5])))) %>%
+        gsub("\\(", "", .)
+    }
+    
+    
+  }
+}
+
+tbl.names
+
+
+# # download tbl.names from census bureau api----
+# 
+# dl.data <- NULL
+# for(i in tbl.names){
+#   dl.data <- rbind(dl.data, 
+#                    mutate(get_acs(geography = "county", 
+#                                   variables = NULL, 
+#                                   table = i, 
+#                                   cache_table = F, 
+#                                   year = 2019, 
+#                                   state = "NC", 
+#                                   survey = "acs5"), 
+#                           yr = 2019),
+#                    mutate(get_acs(geography = "county", 
+#                                   variables = NULL, 
+#                                   table = i, 
+#                                   cache_table = F, 
+#                                   year = 2020, 
+#                                   state = "NC", 
+#                                   survey = "acs5"), 
+#                           yr = 2020))
+# }
+# 
+# 
+# dl.data <- dl.data[!duplicated(dl.data),]
+# 
+# write_csv(x = dl.data, file = "raw_county_data.csv")
+
+
 
 master.data <- master.table %>%
   mutate(., 
@@ -407,13 +461,19 @@ for(ic in 4:ncol(master.data)){
       unlist %>% 
       unname
     
-    if(!is.na(temp.tbls)){
-      temp.tbls <- strsplit(temp.tbls, split = " ") %>%
-        unlist()
-    }else{
-      temp.tbls <- NA
-      # why is this happening? ----
+    if(is.na(unname(unlist(master.data[ir,ic])))){
+      if(!is.na(temp.tbls)){
+        temp.tbls <- strsplit(temp.tbls, split = " ") %>%
+          unlist()
+      }else{
+        temp.tbls <- NA
+        # why is this happening? ----
+      }
+      
     }
+    
+    
+    
       
     # logic for  handling multiple table queries
     if(length(temp.tbls) == 1){
