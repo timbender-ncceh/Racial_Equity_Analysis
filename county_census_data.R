@@ -340,6 +340,21 @@ geo.info <- raw.data[,c("GEOID", "NAME")] %>%
 master.data <- left_join(master.data, 
           geo.info) 
 
+subpop_type <- data.frame(subpopulation = c("Asian/Pacific Islander",
+                                            "Black", 
+                                            "Native American/Alaskan", 
+                                            "Other/Multi-Racial", 
+                                            "White", 
+                                            "Hispanic", 
+                                            "Not Hispanic", 
+                                            "TOTAL"), 
+                          pop_type       = c(rep("race", 5), 
+                                             rep("ethnicity", 2), 
+                                             rep("TOTAL", 1)))
+
+master.data <- master.data %>%
+  left_join(subpop_type)
+
 
 write_csv(x = master.data,
           file = "census_table_data.csv")
@@ -369,3 +384,17 @@ master.table %>%
 
 
 
+# QA check-----
+
+rm(list=ls());cat('\f');gc()
+
+master.data <- read_csv("https://raw.githubusercontent.com/timbender-ncceh/Racial_Equity_Analysis/main/census_table_data.csv")
+
+
+
+master.data %>%
+  group_by(year, state, population, subpopulation) %>%
+  summarise(ALL.PPL_total = sum(ALL.PPL_total), 
+            ALL.PPL_in.fwc = sum(ALL.PPL_in.fwc), 
+            IN.POV_total   = sum(IN.POV_total), 
+            IN.POV_in.fwc  = sum(IN.POV_in.fwc))
