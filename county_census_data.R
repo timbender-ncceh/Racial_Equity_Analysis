@@ -190,27 +190,27 @@ master.table <- master.table %>%
   as_tibble() %>%
   left_join(., 
             data.frame(GEOID = rep(c("37001", "37003", "37005", "37007", "37009", 
-                         "37011", "37013", "37015", "37017", "37019", 
-                         "37021", "37023", "37025", "37027", "37029", 
-                         "37031", "37033", "37035", "37037", "37039", 
-                         "37041", "37043", "37045", "37047", "37049", 
-                         "37051", "37053", "37055", "37057", "37059", 
-                         "37061", "37063", "37065", "37067", "37069", 
-                         "37071", "37073", "37075", "37077", "37079", 
-                         "37081", "37083", "37085", "37087", "37089", 
-                         "37091", "37093", "37095", "37097", "37099", 
-                         "37101", "37103", "37105", "37107", "37109", 
-                         "37111", "37113", "37115", "37117", "37119", 
-                         "37121", "37123", "37125", "37127", "37129", 
-                         "37131", "37133", "37135", "37137", "37139", 
-                         "37141", "37143", "37145", "37147", "37149", 
-                         "37151", "37153", "37155", "37157", "37159", 
-                         "37161", "37163", "37165", "37167", "37169", 
-                         "37171", "37173", "37175", "37177", "37179", 
-                         "37181", "37183", "37185", "37187", "37189", 
-                         "37191", "37193", "37195", "37197", "37199"), each =2), 
-           year = c(2019, 2020)), 
-           by = "year")
+                                     "37011", "37013", "37015", "37017", "37019", 
+                                     "37021", "37023", "37025", "37027", "37029", 
+                                     "37031", "37033", "37035", "37037", "37039", 
+                                     "37041", "37043", "37045", "37047", "37049", 
+                                     "37051", "37053", "37055", "37057", "37059", 
+                                     "37061", "37063", "37065", "37067", "37069", 
+                                     "37071", "37073", "37075", "37077", "37079", 
+                                     "37081", "37083", "37085", "37087", "37089", 
+                                     "37091", "37093", "37095", "37097", "37099", 
+                                     "37101", "37103", "37105", "37107", "37109", 
+                                     "37111", "37113", "37115", "37117", "37119", 
+                                     "37121", "37123", "37125", "37127", "37129", 
+                                     "37131", "37133", "37135", "37137", "37139", 
+                                     "37141", "37143", "37145", "37147", "37149", 
+                                     "37151", "37153", "37155", "37157", "37159", 
+                                     "37161", "37163", "37165", "37167", "37169", 
+                                     "37171", "37173", "37175", "37177", "37179", 
+                                     "37181", "37183", "37185", "37187", "37189", 
+                                     "37191", "37193", "37195", "37197", "37199"), each =2), 
+                       year = c(2019, 2020)), 
+            by = "year")
 
 
 write_csv(master.table, file = "census_table_source_info.csv")
@@ -227,6 +227,8 @@ master.data <- master.table %>%
          IN.POV_in.fwc  = NA_real_, 
          EXP.HL_total   = NA_real_, 
          EXP.HL_in.fwc  = NA_real_)
+
+master.data <- read_csv("https://raw.githubusercontent.com/timbender-ncceh/Racial_Equity_Analysis/main/census_table_data.csv")
 
 
 for(ic in c("ALL.PPL_total", 
@@ -249,8 +251,8 @@ for(ic in c("ALL.PPL_total",
         tempA <- unlist(strsplit(split = " \\+ ", x = temp.tblval))
         
         master.data[ir,ic] <- sum(raw.data[raw.data$variable %in% tempA & 
-                   raw.data$GEOID == master.table$GEOID[ir] & 
-                   raw.data$yr == master.table$year[ir],]$estimate)
+                                             raw.data$GEOID == master.table$GEOID[ir] & 
+                                             raw.data$yr == master.table$year[ir],]$estimate)
         
         
         rm(tempA)
@@ -264,9 +266,79 @@ for(ic in c("ALL.PPL_total",
     }else{
       # skip the logic
     }
-  
+    
   }
 }
+
+
+# settle non-hispanic
+for(i in 1:nrow(master.data)){
+  
+ 
+  if(master.data$subpopulation[i] == "Not Hispanic"){
+    temp.geoid <- master.data$GEOID[i]
+    temp.year  <- master.data$year[i]
+    temp.pop   <- master.data$population[i]
+    
+    # ALL.PPL_total
+    master.data$ALL.PPL_total[i] <- 
+    master.data[master.data$year == temp.year &
+                  master.data$GEOID == temp.geoid & 
+                  master.data$population == temp.pop & 
+                  master.data$subpopulation == "TOTAL",]$ALL.PPL_total - 
+      master.data[master.data$year == temp.year &
+                    master.data$GEOID == temp.geoid & 
+                    master.data$population == temp.pop & 
+                    master.data$subpopulation == "Hispanic",]$ALL.PPL_total
+    
+    # ALL.PPL_in.fwc
+    master.data$ALL.PPL_in.fwc[i] <- 
+      master.data[master.data$year == temp.year &
+                    master.data$GEOID == temp.geoid & 
+                    master.data$population == temp.pop & 
+                    master.data$subpopulation == "TOTAL",]$ALL.PPL_in.fwc - 
+      master.data[master.data$year == temp.year &
+                    master.data$GEOID == temp.geoid & 
+                    master.data$population == temp.pop & 
+                    master.data$subpopulation == "Hispanic",]$ALL.PPL_in.fwc
+    
+    # IN.POV_total
+    master.data$IN.POV_total[i] <- 
+      master.data[master.data$year == temp.year &
+                    master.data$GEOID == temp.geoid & 
+                    master.data$population == temp.pop & 
+                    master.data$subpopulation == "TOTAL",]$IN.POV_total - 
+      master.data[master.data$year == temp.year &
+                    master.data$GEOID == temp.geoid & 
+                    master.data$population == temp.pop & 
+                    master.data$subpopulation == "Hispanic",]$IN.POV_total
+    
+    # IN.POV_in.fwc
+    master.data$IN.POV_in.fwc[i] <- 
+      master.data[master.data$year == temp.year &
+                    master.data$GEOID == temp.geoid & 
+                    master.data$population == temp.pop & 
+                    master.data$subpopulation == "TOTAL",]$IN.POV_in.fwc - 
+      master.data[master.data$year == temp.year &
+                    master.data$GEOID == temp.geoid & 
+                    master.data$population == temp.pop & 
+                    master.data$subpopulation == "Hispanic",]$IN.POV_in.fwc
+  }
+  
+  
+  
+}
+
+# join counties-----
+geo.info <- raw.data[,c("GEOID", "NAME")] %>%
+  mutate(., 
+         state = unlist(lapply(strsplit(NAME, ", "),last)), 
+         county = unlist(lapply(strsplit(NAME, " County, "),first))) %>%
+  .[!colnames(.) %in% "NAME"] %>%
+  .[!duplicated(.),]
+
+master.data <- left_join(master.data, 
+          geo.info) 
 
 
 write_csv(x = master.data,
@@ -293,3 +365,7 @@ master.table %>%
             NA_apif = sum(is.na(ALL.PPL_in.fwc))/length(ALL.PPL_in.fwc),
             NA_ipt = sum(is.na(IN.POV_total))/length(IN.POV_total),
             NA_ipif = sum(is.na(IN.POV_in.fwc))/length(IN.POV_in.fwc))
+
+
+
+
