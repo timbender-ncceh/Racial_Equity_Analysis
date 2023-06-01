@@ -91,7 +91,8 @@ data.18 <- full_join(sp_man_race(x = c(1414,10,5,626,35,3,735,53,1358,2,8,12,614
                            fieldname = c("avg_length_stay_days"))) %>%
   full_join(., sp_man_race(x = c(6517,
                                  47,17,2902,171,13, 
-                                 NA,NA,NA,NA,NA,NA,NA,
+                                 3367, # white
+                                 NA,NA,NA,NA,NA,NA,
                                  128,3222), 
                            fieldname = c("overall_population")))
 
@@ -125,7 +126,8 @@ data.19 <- full_join(sp_man_race(x = c(1598,13,4,710,36,5,829,62,1535,2,11,9,701
                            fieldname = c("avg_length_stay_days"))) %>%
   full_join(., sp_man_race(x = c(6572,
                                 54,22,2936,164,21, 
-                                 NA,NA,NA,NA,NA,NA,NA,
+                                 3375, # white
+                                NA,NA,NA,NA,NA,NA,
                                  123,3239), 
                            fieldname = c("overall_population")))
 # data.19 <- rows_append(data.19, 
@@ -154,7 +156,8 @@ data.20 <- full_join(sp_man_race(x = c(1417,10,8,577,23,4,793,26,1389,1,9,0,577,
                            fieldname = c("avg_length_stay_days"))) %>%
   full_join(., sp_man_race(x = c(5921,
                                  56,26,2645,117,9, 
-                                 NA,NA,NA,NA,NA,NA,NA,
+                                 3068, #white
+                                 NA,NA,NA,NA,NA,NA,
                                  95,2961), 
                            fieldname = c("overall_population")))
 
@@ -182,7 +185,8 @@ data.21 <- full_join(sp_man_race(x = c(1146,17,6,514,30,3,572,42,1104,1,16,9,505
                            fieldname = c("avg_length_stay_days"))) %>%
   full_join(., sp_man_race(x = c(6715,
                                  83,25,3055,178,15, 
-                                 NA,NA,NA,NA,NA,NA,NA,
+                                 3359,# white
+                                 NA,NA,NA,NA,NA,NA,
                                  141,3186), 
                            fieldname = c("overall_population")))
 
