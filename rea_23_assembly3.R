@@ -9,6 +9,7 @@ library(lubridate)
 library(ggplot2)
 library(readr)
 library(openxlsx)
+library(data.table)
 
 rm(list=ls()[!ls() %in% 
                c("vars.21")])
@@ -188,13 +189,25 @@ B01001R_001.nc <- left_join(B01001R_001.nc,
                             cw.raceeth_raceeth)
 
 
-B01001R_001.nc %>%
-  group_by(geo, 
-           year, 
+chart1_nc <- B01001R_001.nc %>%
+  group_by(year, 
+           geo = "NC", 
+           geo_name,
            #concept, 
            label, 
            hud_re) %>%
-  summarise(n = n())
+  summarise(est_population = sum(estimate)) %>%
+  ungroup() %>%
+  group_by(geo_name) %>%
+  mutate(., 
+         pct_total = est_population/sum(est_population))
+
+chart1_nc$geo_f <- factor(chart1_nc$geo, 
+                           levels = c("NC", 
+                                      "BoS", 
+                                      "All Other CoCs"))
+
+chart1_nc$est_population %>% as.character() %>% writeClipboard()
 
 
 B01001R_001.co <- get_acs(geography = "county", 
@@ -222,8 +235,52 @@ B01001R_001.co <- get_acs(geography = "county",
             by = c("geo_name" = "county")) %>%
   left_join(., cw.co_reg, 
             by = c("geo_name" = "County"))
-B01001R_001.co$re <- unlist(lapply(X = B01001R_001.co$concept, 
+B01001R_001.co$census_re <- unlist(lapply(X = B01001R_001.co$concept, 
                                    FUN = gen_cen.re.name))
+B01001R_001.co <- left_join(B01001R_001.co, 
+          cw.raceeth_raceeth)
+
+chart1_coc <- B01001R_001.co %>%
+  group_by(year, 
+           geo = "All Other CoCs", 
+           geo_name = coc_long, 
+           label, hud_re) %>%
+  summarise(est_population = sum(estimate)) %>%
+  ungroup() %>%
+  group_by(geo_name) %>%
+  mutate(., 
+         pct_total = est_population / sum(est_population))
+
+chart1_coc[chart1_coc$geo_name == "NC-503",]$geo <- "BoS"
+
+chart1_coc$geo_f <- factor(chart1_coc$geo, 
+                           levels = c("NC", 
+                                      "BoS", 
+                                      "All Other CoCs"))
+
+ggplot() + 
+  geom_col(data = chart1_nc, 
+             aes(x = pct_total, 
+                 y = geo_name, 
+                 fill = hud_re), 
+           color = "white") +
+  geom_col(data = chart1_coc, 
+           aes(x = pct_total, 
+               y = geo_name, 
+               fill = hud_re), 
+           color = "white")+
+  theme(legend.position = "bottom", 
+        legend.direction = "horizontal", 
+        strip.text.y = element_text(angle = 0)) +
+  scale_fill_discrete(name = "Race")+
+  scale_x_continuous(labels = scales::percent, 
+                     name = "Percent of Total Population", 
+                     breaks = seq(0,1,by=0.1))+
+  scale_y_discrete(name = "Geography Name") +
+  labs(title = "Baseline Race - 2022") + 
+  facet_grid(geo_f~., scales = "free_y", space = "free_y", switch = "y") 
+
+
 
 # pop by eth
 vars.21[grepl(pattern = "^SEX BY AGE \\(.*\\)$", x = vars.21$concept) & 
@@ -276,6 +333,28 @@ B01001E_001.co <- get_acs(geography = "county",
 B01001E_001.co$re <- unlist(lapply(X = B01001E_001.co$concept, 
                                    FUN = gen_cen.re.name))%>% .[!is.na(.)]
 
+
+ggplot() + 
+  geom_col(data = chart1_nc, 
+           aes(x = pct_total, 
+               y = geo_name, 
+               fill = hud_re), 
+           color = "white") +
+  geom_col(data = chart1_coc, 
+           aes(x = pct_total, 
+               y = geo_name, 
+               fill = hud_re), 
+           color = "white")+
+  theme(legend.position = "bottom", 
+        legend.direction = "horizontal", 
+        strip.text.y = element_text(angle = 0)) +
+  scale_fill_discrete(name = "Race")+
+  scale_x_continuous(labels = scales::percent, 
+                     name = "Percent of Total Population", 
+                     breaks = seq(0,1,by=0.1))+
+  scale_y_discrete(name = "Geography Name") +
+  labs(title = "Baseline Race - 2022") + 
+  facet_grid(geo_f~., scales = "free_y", space = "free_y", switch = "y") 
 
 # poverty----
 
