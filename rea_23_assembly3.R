@@ -25,19 +25,24 @@ setwd(prime.wd)
 
 # Funs----
 gen_cen.re.name <- function(concept1){
-  if(!grepl(paste(cw.raceeth_raceeth$census_re, sep = "|", collapse = "|"), 
-            x = concept1)){
-    # no race / eth input
-    out <- NA
-  }else{
-    # race / eth input
-    
-    out <- cw.raceeth_raceeth$census_re[unname(mapply(FUN = grepl, 
-                                                      pattern = cw.raceeth_raceeth$census_re, 
-                                                      x = rep(concept1, length(cw.raceeth_raceeth$census_re))))]
-    
-  }
+  # if(!grepl(paste(cw.raceeth_raceeth$census_re, sep = "|", collapse = "|"), 
+  #           x = concept1)){
+  #   # no race / eth input
+  #   out <- NA
+  # }else{
+  #   # race / eth input
+  #   
+  #   out <- cw.raceeth_raceeth$census_re[unname(mapply(FUN = grepl, 
+  #                                                     pattern = cw.raceeth_raceeth$census_re, 
+  #                                                     x = rep(concept1, length(cw.raceeth_raceeth$census_re))))]
+  #   
+  # }
+  # return(out)
+  
+  out <- gsub("^.*\\(|\\).*$", "", concept1) %>%
+    gsub(" HOUSEHOLDER$", "", .)
   return(out)
+  
 }
 
 make_regnum <- function(x){
@@ -62,6 +67,8 @@ gh.census.data <- "https://raw.githubusercontent.com/timbender-ncceh/Racial_Equi
 gh.census.ref  <- "https://raw.githubusercontent.com/timbender-ncceh/Racial_Equity_Analysis/main/census_table_source_info.csv"
 gh.cw_coc_co   <- "https://raw.githubusercontent.com/timbender-ncceh/PIT_HIC/main/crosswalks/coc_county_crosswalk.csv"
 gh.cw_bosco_reg <- "https://raw.githubusercontent.com/timbender-ncceh/PIT_HIC/main/crosswalks/regionscrosswalk.csv"
+
+gh.mast_cen <- "https://raw.githubusercontent.com/timbender-ncceh/Racial_Equity_Analysis/main/census_table_data.csv"
 # Setup----
 if(!"vars.21" %in% ls()){
   vars.21 <- tidycensus::load_variables(year = var.year, 
@@ -81,7 +88,7 @@ cw.co_reg <- read_csv(gh.cw_bosco_reg)
                                                "SOME OTHER RACE ALONE", 
                                                "TWO OR MORE RACES", 
                                                "WHITE ALONE, NOT HISPANIC OR LATINO", 
-                                               "^HISPANIC OR LATINO"), 
+                                               "HISPANIC OR LATINO"), 
                                  hud_re    = factor(c("White", "Black", "Native American/Alaskan", 
                                                       "Asian/Pacific Islander", "Asian/Pacific Islander", 
                                                       "Other/Multi-Racial", "Other/Multi-Racial", 
@@ -92,6 +99,7 @@ cw.co_reg <- read_csv(gh.cw_bosco_reg)
                                                                "Hispanic", "Non-Hispanic"))))
 
 
+master <- read_csv(gh.mast_cen)
 
 # Tidy----
 ghd$county <- gsub(" County, .*$", "", ghd$NAME)
@@ -104,51 +112,51 @@ ghd <- left_join(ghd,
 
 # race / ethnicity----
 
-# total pop
-vars.21[grepl(pattern = "^SEX BY AGE$", x = vars.21$concept) & 
-          grepl(pattern = "^Estimate!!Total:$", x = vars.21$label),]
-
-
-B01001_001.nc <- get_acs(geography = "state", 
-                         variables = "B01001_001", 
-                         table     = NULL, 
-                         cache_table = var.ct, 
-                         year        = var.year, 
-                         state       = "NC", 
-                         survey      = "acs5") %>%
-  mutate(., 
-         geo_name = gen_coname(NAME), 
-         geo = ifelse(geo_name == "North Carolina", "state", "county"),
-         year = var.year) %>%
-  left_join(., 
-            vars.21[,c(1,2,3)], 
-            by = c("variable" = "name")) %>%
-  left_join(., 
-            cw.coc_co, 
-            by = c("geo_name" = "county")) %>%
-  left_join(., cw.co_reg, 
-            by = c("geo_name" = "County"))
-
-
-B01001_001.co <- get_acs(geography = "county", 
-                         variables = "B01001_001", 
-                         table     = NULL, 
-                         cache_table = var.ct, 
-                         year        = var.year, 
-                         state       = "NC", 
-                         survey      = "acs5") %>%
-  mutate(., 
-         geo_name = gen_coname(NAME), 
-         geo = ifelse(geo_name == "North Carolina", "state", "county"),
-         year = var.year) %>%
-  left_join(., 
-            vars.21[,c(1,2,3)], 
-            by = c("variable" = "name")) %>%
-  left_join(., 
-            cw.coc_co, 
-            by = c("geo_name" = "county")) %>%
-  left_join(., cw.co_reg, 
-            by = c("geo_name" = "County"))
+# # total pop
+# vars.21[grepl(pattern = "^SEX BY AGE$", x = vars.21$concept) & 
+#           grepl(pattern = "^Estimate!!Total:$", x = vars.21$label),]
+# 
+# 
+# B01001_001.nc <- get_acs(geography = "state", 
+#                          variables = "B01001_001", 
+#                          table     = NULL, 
+#                          cache_table = var.ct, 
+#                          year        = var.year, 
+#                          state       = "NC", 
+#                          survey      = "acs5") %>%
+#   mutate(., 
+#          geo_name = gen_coname(NAME), 
+#          geo = ifelse(geo_name == "North Carolina", "state", "county"),
+#          year = var.year) %>%
+#   left_join(., 
+#             vars.21[,c(1,2,3)], 
+#             by = c("variable" = "name")) %>%
+#   left_join(., 
+#             cw.coc_co, 
+#             by = c("geo_name" = "county")) %>%
+#   left_join(., cw.co_reg, 
+#             by = c("geo_name" = "County"))
+# 
+# 
+# B01001_001.co <- get_acs(geography = "county", 
+#                          variables = "B01001_001", 
+#                          table     = NULL, 
+#                          cache_table = var.ct, 
+#                          year        = var.year, 
+#                          state       = "NC", 
+#                          survey      = "acs5") %>%
+#   mutate(., 
+#          geo_name = gen_coname(NAME), 
+#          geo = ifelse(geo_name == "North Carolina", "state", "county"),
+#          year = var.year) %>%
+#   left_join(., 
+#             vars.21[,c(1,2,3)], 
+#             by = c("variable" = "name")) %>%
+#   left_join(., 
+#             cw.coc_co, 
+#             by = c("geo_name" = "county")) %>%
+#   left_join(., cw.co_reg, 
+#             by = c("geo_name" = "County"))
 
 
 
@@ -189,22 +197,6 @@ B01001R_001.nc <- left_join(B01001R_001.nc,
                             cw.raceeth_raceeth)
 
 
-# chart1_nc <- B01001R_001.nc %>%
-#   group_by(year, 
-#            geo = "NC", 
-#            geo_name,
-#            #concept, 
-#            label, 
-#            hud_re) %>%
-#   summarise(est_population = sum(estimate)) %>%
-#   ungroup() %>%
-#   group_by(geo_name) %>%
-#   mutate(., 
-#          pct_total = est_population/sum(est_population))
-# 
-# chart1_nc$est_population %>% as.character() %>% writeClipboard()
-
-
 B01001R_001.co <- get_acs(geography = "county", 
                           variables = c("B01001A_001", 
                                         "B01001B_001", 
@@ -235,30 +227,17 @@ B01001R_001.co$census_re <- unlist(lapply(X = B01001R_001.co$concept,
 B01001R_001.co <- left_join(B01001R_001.co, 
           cw.raceeth_raceeth)
 
-# chart1_coc <- B01001R_001.co %>%
-#   group_by(year, 
-#            geo = "All Other CoCs", 
-#            geo_name = coc_long, 
-#            label, hud_re) %>%
-#   summarise(est_population = sum(estimate)) %>%
-#   ungroup() %>%
-#   group_by(geo_name) %>%
-#   mutate(., 
-#          pct_total = est_population / sum(est_population))
-# 
-# chart1_coc[chart1_coc$geo_name == "NC-503",]$geo <- "BoS"
-
 
 chart1 <- rbind(summarise(group_by(mutate(B01001R_001.co, 
-                          group_cat = ifelse(coc_short == 503, "BoS", "All Other CoCs")),
-                   year, group_cat, 
-                   hud_re), 
-          est_pop = sum(estimate)),
-      summarise(group_by(mutate(B01001R_001.nc, 
-                          group_cat = "NC"),
-                   year, group_cat, 
-                   hud_re), 
-          est_pop = sum(estimate))) %>%
+                                          group_cat = ifelse(coc_short == 503, "BoS", "All Other CoCs")),
+                                   year, group_cat, 
+                                   hud_re), 
+                          est_pop = sum(estimate)),
+                summarise(group_by(mutate(B01001R_001.nc, 
+                                          group_cat = "NC"),
+                                   year, group_cat, 
+                                   hud_re), 
+                          est_pop = sum(estimate))) %>%
   as.data.table() %>%
   dcast(., 
         year + group_cat ~ hud_re) 
@@ -298,8 +277,11 @@ B01001E_001.nc <- get_acs(geography = "state",
             by = c("geo_name" = "county")) %>%
   left_join(., cw.co_reg, 
             by = c("geo_name" = "County"))
-B01001E_001.nc$re <- unlist(lapply(X = B01001E_001.nc$concept, 
-                                   FUN = gen_cen.re.name)) %>% .[!is.na(.)]
+
+
+B01001E_001.nc$census_re <- gsub("^.*\\(|\\).*$", "", B01001E_001.nc$concept)
+B01001E_001.nc <- left_join(B01001E_001.nc, 
+                            cw.raceeth_raceeth)
 
 B01001E_001.co <- get_acs(geography = "county", 
                           variables = c("B01001H_001", 
@@ -321,38 +303,37 @@ B01001E_001.co <- get_acs(geography = "county",
             by = c("geo_name" = "county")) %>%
   left_join(., cw.co_reg, 
             by = c("geo_name" = "County"))
-B01001E_001.co$re <- unlist(lapply(X = B01001E_001.co$concept, 
-                                   FUN = gen_cen.re.name))%>% .[!is.na(.)]
+B01001E_001.co$census_re <- gsub("^.*\\(|\\).*$", "", B01001E_001.co$concept)
+B01001E_001.co <- left_join(B01001E_001.co, 
+                            cw.raceeth_raceeth)
 
 
-ggplot() + 
-  geom_col(data = chart1_nc, 
-           aes(x = pct_total, 
-               y = geo_name, 
-               fill = hud_re), 
-           color = "white") +
-  geom_col(data = chart1_coc, 
-           aes(x = pct_total, 
-               y = geo_name, 
-               fill = hud_re), 
-           color = "white")+
-  theme(legend.position = "bottom", 
-        legend.direction = "horizontal", 
-        strip.text.y = element_text(angle = 0)) +
-  scale_fill_discrete(name = "Race")+
-  scale_x_continuous(labels = scales::percent, 
-                     name = "Percent of Total Population", 
-                     breaks = seq(0,1,by=0.1))+
-  scale_y_discrete(name = "Geography Name") +
-  labs(title = "Baseline Race - 2022") + 
-  facet_grid(geo_f~., scales = "free_y", space = "free_y", switch = "y") 
+chart2 <- rbind(summarise(group_by(mutate(B01001E_001.co, 
+                                          group_cat = ifelse(coc_short == 503, "BoS", "All Other CoCs")),
+                                   year, group_cat, 
+                                   hud_re), 
+                          est_pop = sum(estimate)),
+                summarise(group_by(mutate(B01001E_001.nc, 
+                                          group_cat = "NC"),
+                                   year, group_cat, 
+                                   hud_re), 
+                          est_pop = sum(estimate))) %>%
+  as.data.table() %>%
+  dcast(., 
+        year + group_cat ~ hud_re) 
+
+chart2$year %>% as.character %>% writeClipboard()
+chart2$group_cat %>% as.character %>% writeClipboard()
+chart2$Hispanic %>% as.character %>% writeClipboard()
+chart2$`Non-Hispanic` %>% as.character %>% writeClipboard()
 
 # poverty----
 
+
 # race
-ghref %>%
+pov.vars <- ghref %>%
   .[.$population == "All_People",] %>%
-  .[!.$subpopulation %in% c("Hispanic", "Not Hispanic", "TOTAL"),] %>%
+  .[!.$subpopulation %in% c("Hispanic", "Not Hispanic"),] %>%
   group_by(population, 
             subpopulation,
            ALL.PPL_total,
@@ -362,6 +343,40 @@ ghref %>%
            EXP.HL_total,
            EXP.HL_in.fwc) %>%
   summarise()
+
+pov.vars <- c(pov.vars$ALL.PPL_total,
+              pov.vars$ALL.PPL_in.fwc,
+              pov.vars$IN.POV_total,
+              pov.vars$IN.POV_in.fwc) %>%
+  unique() %>%
+  strsplit(., 
+           " \\+ | \\- ") %>%
+  unlist() %>% unique() %>%
+  sort()
+
+pov21R <- ghd[ghd$variable %in% pov.vars,] %>%
+  .[.$yr == 2021, ]  %>%
+  mutate(., 
+         geo_name = gen_coname(NAME), 
+         geo = ifelse(geo_name == "North Carolina", "state", "county")) %>%
+  # left_join(., 
+  #           vars.21[,c(1,2,3)], 
+  #           by = c("variable" = "name")) %>%
+  left_join(., 
+            cw.coc_co, 
+            by = c("geo_name" = "county")) %>%
+  left_join(., cw.co_reg, 
+            by = c("geo_name" = "County"))
+
+pov21R$census_re <- unlist(lapply(X = pov21R$concept, 
+                                  FUN = gen_cen.re.name))
+pov21R <- left_join(pov21R, 
+                    cw.raceeth_raceeth)
+
+pov21R_bos <- pov21R[pov21R$coc_short == 503,]
+pov21R_bos %>%
+  group_by(year, )
+
 
 # ethnicity
 ghref %>%
