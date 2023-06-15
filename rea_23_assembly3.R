@@ -81,10 +81,16 @@ cw.co_reg <- read_csv(gh.cw_bosco_reg)
                                                "TWO OR MORE RACES", 
                                                "WHITE ALONE, NOT HISPANIC OR LATINO", 
                                                "^HISPANIC OR LATINO"), 
-                                 hud_re    = c("White", "Black", "Native American/Alaskan", 
-                                               "Asian/Pacific Islander", "Asian/Pacific Islander", 
-                                               "Other/Multi-Racial", "Other/Multi-Racial", 
-                                               "Hispanic", "Non-Hispanic")))
+                                 hud_re    = factor(c("White", "Black", "Native American/Alaskan", 
+                                                      "Asian/Pacific Islander", "Asian/Pacific Islander", 
+                                                      "Other/Multi-Racial", "Other/Multi-Racial", 
+                                                      "Hispanic", "Non-Hispanic"), 
+                                                    levels = c("White", "Black", "Native American/Alaskan", 
+                                                               "Asian/Pacific Islander", 
+                                                               "Other/Multi-Racial", 
+                                                               "Hispanic", "Non-Hispanic"))))
+
+
 
 # Tidy----
 ghd$county <- gsub(" County, .*$", "", ghd$NAME)
@@ -179,7 +185,16 @@ B01001R_001.nc <- get_acs(geography = "state",
 B01001R_001.nc$census_re <- unlist(lapply(X = B01001R_001.nc$concept, 
                             FUN = gen_cen.re.name))
 B01001R_001.nc <- left_join(B01001R_001.nc, 
-          cw.raceeth_raceeth)
+                            cw.raceeth_raceeth)
+
+
+B01001R_001.nc %>%
+  group_by(geo, 
+           year, 
+           #concept, 
+           label, 
+           hud_re) %>%
+  summarise(n = n())
 
 
 B01001R_001.co <- get_acs(geography = "county", 
