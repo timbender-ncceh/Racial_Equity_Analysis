@@ -189,25 +189,20 @@ B01001R_001.nc <- left_join(B01001R_001.nc,
                             cw.raceeth_raceeth)
 
 
-chart1_nc <- B01001R_001.nc %>%
-  group_by(year, 
-           geo = "NC", 
-           geo_name,
-           #concept, 
-           label, 
-           hud_re) %>%
-  summarise(est_population = sum(estimate)) %>%
-  ungroup() %>%
-  group_by(geo_name) %>%
-  mutate(., 
-         pct_total = est_population/sum(est_population))
-
-chart1_nc$geo_f <- factor(chart1_nc$geo, 
-                           levels = c("NC", 
-                                      "BoS", 
-                                      "All Other CoCs"))
-
-chart1_nc$est_population %>% as.character() %>% writeClipboard()
+# chart1_nc <- B01001R_001.nc %>%
+#   group_by(year, 
+#            geo = "NC", 
+#            geo_name,
+#            #concept, 
+#            label, 
+#            hud_re) %>%
+#   summarise(est_population = sum(estimate)) %>%
+#   ungroup() %>%
+#   group_by(geo_name) %>%
+#   mutate(., 
+#          pct_total = est_population/sum(est_population))
+# 
+# chart1_nc$est_population %>% as.character() %>% writeClipboard()
 
 
 B01001R_001.co <- get_acs(geography = "county", 
@@ -240,45 +235,41 @@ B01001R_001.co$census_re <- unlist(lapply(X = B01001R_001.co$concept,
 B01001R_001.co <- left_join(B01001R_001.co, 
           cw.raceeth_raceeth)
 
-chart1_coc <- B01001R_001.co %>%
-  group_by(year, 
-           geo = "All Other CoCs", 
-           geo_name = coc_long, 
-           label, hud_re) %>%
-  summarise(est_population = sum(estimate)) %>%
-  ungroup() %>%
-  group_by(geo_name) %>%
-  mutate(., 
-         pct_total = est_population / sum(est_population))
+# chart1_coc <- B01001R_001.co %>%
+#   group_by(year, 
+#            geo = "All Other CoCs", 
+#            geo_name = coc_long, 
+#            label, hud_re) %>%
+#   summarise(est_population = sum(estimate)) %>%
+#   ungroup() %>%
+#   group_by(geo_name) %>%
+#   mutate(., 
+#          pct_total = est_population / sum(est_population))
+# 
+# chart1_coc[chart1_coc$geo_name == "NC-503",]$geo <- "BoS"
 
-chart1_coc[chart1_coc$geo_name == "NC-503",]$geo <- "BoS"
 
-chart1_coc$geo_f <- factor(chart1_coc$geo, 
-                           levels = c("NC", 
-                                      "BoS", 
-                                      "All Other CoCs"))
+chart1 <- rbind(summarise(group_by(mutate(B01001R_001.co, 
+                          group_cat = ifelse(coc_short == 503, "BoS", "All Other CoCs")),
+                   year, group_cat, 
+                   hud_re), 
+          est_pop = sum(estimate)),
+      summarise(group_by(mutate(B01001R_001.nc, 
+                          group_cat = "NC"),
+                   year, group_cat, 
+                   hud_re), 
+          est_pop = sum(estimate))) %>%
+  as.data.table() %>%
+  dcast(., 
+        year + group_cat ~ hud_re) 
 
-ggplot() + 
-  geom_col(data = chart1_nc, 
-             aes(x = pct_total, 
-                 y = geo_name, 
-                 fill = hud_re), 
-           color = "white") +
-  geom_col(data = chart1_coc, 
-           aes(x = pct_total, 
-               y = geo_name, 
-               fill = hud_re), 
-           color = "white")+
-  theme(legend.position = "bottom", 
-        legend.direction = "horizontal", 
-        strip.text.y = element_text(angle = 0)) +
-  scale_fill_discrete(name = "Race")+
-  scale_x_continuous(labels = scales::percent, 
-                     name = "Percent of Total Population", 
-                     breaks = seq(0,1,by=0.1))+
-  scale_y_discrete(name = "Geography Name") +
-  labs(title = "Baseline Race - 2022") + 
-  facet_grid(geo_f~., scales = "free_y", space = "free_y", switch = "y") 
+chart1$year %>% as.character %>% writeClipboard()
+chart1$group_cat %>% as.character %>% writeClipboard()
+chart1$White %>% as.character %>% writeClipboard()
+chart1$Black %>% as.character %>% writeClipboard()
+chart1$`Native American/Alaskan` %>% as.character %>% writeClipboard()
+chart1$`Asian/Pacific Islander` %>% as.character %>% writeClipboard()
+chart1$`Other/Multi-Racial` %>% as.character %>% writeClipboard()
 
 
 
