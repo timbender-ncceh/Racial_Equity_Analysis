@@ -23,6 +23,16 @@ r_code.wd   <- "C:/Users/TimBender/Documents/R/ncceh/projects/racial_equity_anal
 setwd(prime.wd)
 
 # Funs----
+make_regnum <- function(x){
+  if(nchar(x)==1){
+    x <- paste("0",x,sep="")
+  }else{
+    x <- as.character(x)
+  }
+  
+  x <- paste("R",x,sep="")
+  return(x)
+}
 gen_coname <- function(NAME1){
   return(gsub(" County, .*$", "", NAME1))
 }
@@ -46,6 +56,19 @@ ghd   <- read_csv(gh.census.data)
 ghref <- read_csv(gh.census.ref)
 cw.coc_co <- read_csv(gh.cw_coc_co)
 cw.co_reg <- read_csv(gh.cw_bosco_reg)
+(cw.raceeth_raceeth <- data.frame(census_re = c("WHITE ALONE", 
+                                               "BLACK OR AFRICAN AMERICAN ALONE",
+                                               "AMERICAN INDIAN AND ALASKA NATIVE ALONE", 
+                                               "ASIAN ALONE", 
+                                               "NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE", 
+                                               "SOME OTHER RACE ALONE", 
+                                               "TWO OR MORE RACES", 
+                                               "WHITE ALONE, NOT HISPANIC OR LATINO", 
+                                               "HISPANIC OR LATINO"), 
+                                 hud_re    = c("White", "Black", "Native American/Alaskan", 
+                                               "Asian/Pacific Islander", "Asian/Pacific Islander", 
+                                               "Other/Multi-Racial", "Other/Multi-Racial", 
+                                               "Hispanic", "Non-Hispanic")))
 
 # Tidy----
 ghd$county <- gsub(" County, .*$", "", ghd$NAME)
@@ -71,12 +94,17 @@ B01001_001.nc <- get_acs(geography = "state",
                          state       = "NC", 
                          survey      = "acs5") %>%
   mutate(., 
-         geo = "state",
          geo_name = gen_coname(NAME), 
+         geo = ifelse(geo_name == "North Carolina", "state", "county"),
          year = var.year) %>%
   left_join(., 
             vars.21[,c(1,2,3)], 
-            by = c("variable" = "name"))
+            by = c("variable" = "name")) %>%
+  left_join(., 
+            cw.coc_co, 
+            by = c("geo_name" = "county")) %>%
+  left_join(., cw.co_reg, 
+            by = c("geo_name" = "County"))
 
 
 B01001_001.co <- get_acs(geography = "county", 
@@ -87,12 +115,20 @@ B01001_001.co <- get_acs(geography = "county",
                          state       = "NC", 
                          survey      = "acs5") %>%
   mutate(., 
-         geo = "county",
          geo_name = gen_coname(NAME), 
+         geo = ifelse(geo_name == "North Carolina", "state", "county"),
          year = var.year) %>%
   left_join(., 
             vars.21[,c(1,2,3)], 
-            by = c("variable" = "name"))
+            by = c("variable" = "name")) %>%
+  left_join(., 
+            cw.coc_co, 
+            by = c("geo_name" = "county")) %>%
+  left_join(., cw.co_reg, 
+            by = c("geo_name" = "County"))
+
+
+
 
 # pop by race
 vars.21[grepl(pattern = "^SEX BY AGE \\(.*\\)$", x = vars.21$concept) & 
@@ -113,12 +149,17 @@ B01001R_001.nc <- get_acs(geography = "state",
                           state       = "NC", 
                           survey      = "acs5") %>%
   mutate(., 
-         geo = "state",
          geo_name = gen_coname(NAME), 
+         geo = ifelse(geo_name == "North Carolina", "state", "county"),
          year = var.year) %>%
   left_join(., 
             vars.21[,c(1,2,3)], 
-            by = c("variable" = "name"))
+            by = c("variable" = "name")) %>%
+  left_join(., 
+            cw.coc_co, 
+            by = c("geo_name" = "county")) %>%
+  left_join(., cw.co_reg, 
+            by = c("geo_name" = "County"))
 
 B01001R_001.co <- get_acs(geography = "county", 
                           variables = c("B01001A_001", 
@@ -134,12 +175,17 @@ B01001R_001.co <- get_acs(geography = "county",
                           state       = "NC", 
                           survey      = "acs5") %>%
   mutate(., 
-         geo = "county",
          geo_name = gen_coname(NAME), 
+         geo = ifelse(geo_name == "North Carolina", "state", "county"),
          year = var.year) %>%
   left_join(., 
             vars.21[,c(1,2,3)], 
-            by = c("variable" = "name"))
+            by = c("variable" = "name")) %>%
+  left_join(., 
+            cw.coc_co, 
+            by = c("geo_name" = "county")) %>%
+  left_join(., cw.co_reg, 
+            by = c("geo_name" = "County"))
 
 
 # pop by eth
@@ -156,12 +202,17 @@ B01001E_001.nc <- get_acs(geography = "state",
                           state       = "NC", 
                           survey      = "acs5") %>%
   mutate(., 
-         geo = "state",
          geo_name = gen_coname(NAME), 
+         geo = ifelse(geo_name == "North Carolina", "state", "county"),
          year = var.year) %>%
   left_join(., 
             vars.21[,c(1,2,3)], 
-            by = c("variable" = "name"))
+            by = c("variable" = "name")) %>%
+  left_join(., 
+            cw.coc_co, 
+            by = c("geo_name" = "county")) %>%
+  left_join(., cw.co_reg, 
+            by = c("geo_name" = "County"))
 
 B01001E_001.co <- get_acs(geography = "county", 
                           variables = c("B01001H_001", 
@@ -172,12 +223,17 @@ B01001E_001.co <- get_acs(geography = "county",
                           state       = "NC", 
                           survey      = "acs5") %>%
   mutate(., 
-         geo = "county",
          geo_name = gen_coname(NAME), 
+         geo = ifelse(geo_name == "North Carolina", "state", "county"),
          year = var.year) %>%
   left_join(., 
             vars.21[,c(1,2,3)], 
-            by = c("variable" = "name"))
+            by = c("variable" = "name")) %>%
+  left_join(., 
+            cw.coc_co, 
+            by = c("geo_name" = "county")) %>%
+  left_join(., cw.co_reg, 
+            by = c("geo_name" = "County"))
 
 
 
