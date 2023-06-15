@@ -23,6 +23,22 @@ r_code.wd   <- "C:/Users/TimBender/Documents/R/ncceh/projects/racial_equity_anal
 setwd(prime.wd)
 
 # Funs----
+gen_cen.re.name <- function(concept1){
+  if(!grepl(paste(cw.raceeth_raceeth$census_re, sep = "|", collapse = "|"), 
+            x = concept1)){
+    # no race / eth input
+    out <- NA
+  }else{
+    # race / eth input
+    
+    out <- cw.raceeth_raceeth$census_re[unname(mapply(FUN = grepl, 
+                                                      pattern = cw.raceeth_raceeth$census_re, 
+                                                      x = rep(concept1, length(cw.raceeth_raceeth$census_re))))]
+    
+  }
+  return(out)
+}
+
 make_regnum <- function(x){
   if(nchar(x)==1){
     x <- paste("0",x,sep="")
@@ -64,7 +80,7 @@ cw.co_reg <- read_csv(gh.cw_bosco_reg)
                                                "SOME OTHER RACE ALONE", 
                                                "TWO OR MORE RACES", 
                                                "WHITE ALONE, NOT HISPANIC OR LATINO", 
-                                               "HISPANIC OR LATINO"), 
+                                               "^HISPANIC OR LATINO"), 
                                  hud_re    = c("White", "Black", "Native American/Alaskan", 
                                                "Asian/Pacific Islander", "Asian/Pacific Islander", 
                                                "Other/Multi-Racial", "Other/Multi-Racial", 
@@ -159,7 +175,12 @@ B01001R_001.nc <- get_acs(geography = "state",
             cw.coc_co, 
             by = c("geo_name" = "county")) %>%
   left_join(., cw.co_reg, 
-            by = c("geo_name" = "County"))
+            by = c("geo_name" = "County")) 
+B01001R_001.nc$census_re <- unlist(lapply(X = B01001R_001.nc$concept, 
+                            FUN = gen_cen.re.name))
+B01001R_001.nc <- left_join(B01001R_001.nc, 
+          cw.raceeth_raceeth)
+
 
 B01001R_001.co <- get_acs(geography = "county", 
                           variables = c("B01001A_001", 
@@ -186,7 +207,8 @@ B01001R_001.co <- get_acs(geography = "county",
             by = c("geo_name" = "county")) %>%
   left_join(., cw.co_reg, 
             by = c("geo_name" = "County"))
-
+B01001R_001.co$re <- unlist(lapply(X = B01001R_001.co$concept, 
+                                   FUN = gen_cen.re.name))
 
 # pop by eth
 vars.21[grepl(pattern = "^SEX BY AGE \\(.*\\)$", x = vars.21$concept) & 
@@ -213,6 +235,8 @@ B01001E_001.nc <- get_acs(geography = "state",
             by = c("geo_name" = "county")) %>%
   left_join(., cw.co_reg, 
             by = c("geo_name" = "County"))
+B01001E_001.nc$re <- unlist(lapply(X = B01001E_001.nc$concept, 
+                                   FUN = gen_cen.re.name)) %>% .[!is.na(.)]
 
 B01001E_001.co <- get_acs(geography = "county", 
                           variables = c("B01001H_001", 
@@ -234,7 +258,8 @@ B01001E_001.co <- get_acs(geography = "county",
             by = c("geo_name" = "county")) %>%
   left_join(., cw.co_reg, 
             by = c("geo_name" = "County"))
-
+B01001E_001.co$re <- unlist(lapply(X = B01001E_001.co$concept, 
+                                   FUN = gen_cen.re.name))%>% .[!is.na(.)]
 
 
 # poverty----
