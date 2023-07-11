@@ -9,6 +9,13 @@ cat('\f');gc()
 
 setwd("C:/Users/TimBender/Documents/R/ncceh/data/census_data")
 
+# Funs----
+ucomps <- function(df = out){
+  list(population = unique(df$population), 
+       subpopulation = unique(df$subpopulation), 
+       poptype = unique(df$poptype), 
+       famtype = unique(df$famtype))
+}
 
 # Tables / Variables----
 
@@ -21,9 +28,9 @@ gh.vars$rid <- 1:nrow(gh.vars)
 
 
 # pull variables list
+try(vars.acs5 <- read_csv("https://raw.githubusercontent.com/timbender-ncceh/Racial_Equity_Analysis/main/acs5_data_dictionary.csv"))
 if(!"vars.acs5" %in% ls()){ # memory saving logic so you don't DL large dataset if you alrady have it.
-  vars.acs5 <- tidycensus::load_variables(year    = 2021,
-                                          dataset = "acs5")
+  vars.acs5 <- tidycensus::load_variables(year    = 2021, dataset = "acs5")
 }
 
 
@@ -122,7 +129,10 @@ for(p in unique(gh.vars$population)){
 }
 
 
+out2 <- out2 %>% as_tibble() 
+
 out <- left_join(out, out2)
+
 rm(out2)
 
 out <- left_join(out, 
@@ -131,22 +141,31 @@ out <- left_join(out,
   #.[!colnames(.) %in% "rid"] %>%
   .[!duplicated(.),]
 
-
-out <- out %>%
+temp.out <- out
+out <- temp.out %>%
   group_by(population,subpopulation) %>%
   summarise() %>%
   mutate(., 
          summary_group = 1:length(population)) %>%
-  right_join(., out)
+  right_join(., temp.out)
+rm(temp.out)
+
+# out %>%
+#   # group_by(population) %>%
+#   # group_by(subpopulation) %>%
+#   # group_by(poptype) %>%
+#   # group_by(famtype) %>%
+#   summarise()
 
 # calculation
 
-out <- gh.vars[,c(1:6,8)] %>%
+temp.out <- gh.vars[,c(1:6,8)] %>%
   as.data.table() %>%
   melt(., 
        id.vars = c("population", "subpopulation", "rid"), 
        variable.name = "colname", 
-       value.name = "group_calculation") %>%
+       value.name = "group_calculation", 
+       variable.factor = F) %>%
   as.data.frame() %>%
   as_tibble() %>%
   .[complete.cases(.),] %>%
@@ -154,19 +173,28 @@ out <- gh.vars[,c(1:6,8)] %>%
          poptype = gsub("_.*$", "", colname), 
          famtype = gsub("^.*_", "", colname)) %>%
   .[,c(1:3,5:7)] %>%
-  right_join(., 
-             out) %>%
-  .[order(.$summary_group, .$subpopulation, .$population),] %>%
-  .[!colnames(.) %in% c("summary_group")] %>%
-  .[!is.na(.$group_calculation),] %>% 
+  #right_join(., out) %>%
+  left_join(.,out) %>%  
+  .[order(.$summary_group, .$subpopulation, .$population),] %>% 
+  .[!colnames(.) %in% c("summary_group")] %>% # works up to here 
+  .[!is.na(.$group_calculation),] %>% # breaks here
   .[!duplicated(.),] %>%
-  .[order(.$group_calculation),]
+  .[order(.$group_calculation),] 
+
+# # temp
+# temp.out[is.na(temp.out$group_calculation),]
+# ucomps(temp.out)
+# # /temp
+
+out <- temp.out
+rm(temp.out)
 
 out2 <- NULL
 for(yi in c(2018,2019,2020,2021)){
   
   temp <- tidycensus::get_acs(geography = "county", 
-                              variables = out$variable_name, 
+                              #variables = out$variable_name, 
+                              variables = unique(out$variable_name[!is.na(out$variable_name)]),
                               year = yi, 
                               state = "NC", 
                               survey = "acs5") %>%
@@ -180,6 +208,7 @@ for(yi in c(2018,2019,2020,2021)){
 gc()
 
 out3 <- left_join(out, out2, by = c("variable_name" = "variable"))
+
 
 # out3 %>%
 #   .[,c(1,2,4,5,6,7,8,9)] %>%
@@ -213,6 +242,10 @@ out4 <- out3 %>%
 
 gc()
 
+out4 <- out4 %>% as_tibble()
+
+out4 <- out4[!colnames(out4) %in% "NA"]
+
 rm(out, out2, out3)
 gc()
 
@@ -228,21 +261,21 @@ c("sum(", paste(paste("out5$", colnames(out4)[8:ncol(out4)], sep = ""), sep = "[
 out5 <- out4
 out5$out_calc <- NA
 
+#colnames(out5)[grepl(pattern = "_\\d{1,}$", colnames(out5))]
+
+
+
 for(i in 1:nrow(out5)){
-  out5$out_calc[i] <- sum(out5$B17001A_004[i], out5$B17001A_005[i], out5$B17001A_006[i], out5$B17001A_007[i], out5$B17001A_008[i], out5$B17001A_009[i], out5$B17001A_010[i], out5$B17001A_018[i], out5$B17001A_019[i], out5$B17001A_020[i], out5$B17001A_021[i], out5$B17001A_022[i], out5$B17001A_023[i], out5$B17001A_024[i], out5$B17001B_004[i], out5$B17001B_005[i], out5$B17001B_006[i], out5$B17001B_007[i], out5$B17001B_008[i], out5$B17001B_009[i], out5$B17001B_010[i], out5$B17001B_018[i], out5$B17001B_019[i], out5$B17001B_020[i], out5$B17001B_021[i], out5$B17001B_022[i], out5$B17001B_023[i], out5$B17001B_024[i], out5$B17001C_004[i], out5$B17001C_005[i], out5$B17001C_006[i], out5$B17001C_007[i], out5$B17001C_008[i], 
-                          out5$B17001C_009[i], out5$B17001C_010[i], out5$B17001C_018[i], out5$B17001C_019[i], out5$B17001C_020[i], out5$B17001C_021[i], out5$B17001C_022[i], out5$B17001C_023[i], out5$B17001C_024[i], out5$B17001D_004[i], out5$B17001D_005[i], out5$B17001D_006[i], out5$B17001D_007[i], out5$B17001D_008[i], out5$B17001D_009[i], out5$B17001D_010[i], out5$B17001D_018[i], out5$B17001D_019[i], out5$B17001D_020[i], out5$B17001D_021[i], out5$B17001D_022[i], out5$B17001D_023[i], out5$B17001D_024[i], out5$B17001E_004[i], out5$B17001E_005[i], out5$B17001E_006[i], out5$B17001E_007[i], out5$B17001E_008[i], out5$B17001E_009[i], out5$B17001E_010[i], out5$B17001E_018[i], out5$B17001E_019[i], out5$B17001E_020[i], out5$B17001E_021[i], out5$B17001E_022[i], out5$B17001E_023[i], 
-                          out5$B17001E_024[i], out5$B17001F_004[i], out5$B17001F_005[i], out5$B17001F_006[i], out5$B17001F_007[i], out5$B17001F_008[i], out5$B17001F_009[i], out5$B17001F_010[i], out5$B17001F_018[i], out5$B17001F_019[i], out5$B17001F_020[i], out5$B17001F_021[i], out5$B17001F_022[i], out5$B17001F_023[i], out5$B17001F_024[i], out5$B17001G_004[i], out5$B17001G_005[i], out5$B17001G_006[i], out5$B17001G_007[i], out5$B17001G_008[i], out5$B17001G_009[i], out5$B17001G_010[i], out5$B17001G_018[i], out5$B17001G_019[i], out5$B17001G_020[i], out5$B17001G_021[i], out5$B17001G_022[i], out5$B17001G_023[i], out5$B17001G_024[i], out5$B17001I_004[i], out5$B17001I_005[i], out5$B17001I_006[i], out5$B17001I_007[i], out5$B17001I_008[i], out5$B17001I_009[i], out5$B17001I_010[i], 
-                          out5$B17001I_018[i], out5$B17001I_019[i], out5$B17001I_020[i], out5$B17001I_021[i], out5$B17001I_022[i], out5$B17001I_023[i], out5$B17001I_024[i], out5$B17001_004[i], out5$B17001_005[i], out5$B17001_006[i], out5$B17001_007[i], out5$B17001_008[i], out5$B17001_009[i], out5$B17001_010[i], out5$B17001_018[i], out5$B17001_019[i], out5$B17001_020[i], out5$B17001_021[i], out5$B17001_022[i], out5$B17001_023[i], out5$B17001_024[i], out5$B17010A_004[i], out5$B17010A_011[i], out5$B17010A_017[i], out5$B17010B_004[i], out5$B17010B_011[i], out5$B17010B_017[i], out5$B17010C_004[i], out5$B17010C_011[i], out5$B17010C_017[i], out5$B17010D_004[i], out5$B17010D_011[i], out5$B17010D_017[i], out5$B17010E_004[i], out5$B17010E_011[i], out5$B17010E_017[i], out5$B17010F_004[i], out5$B17010F_011[i], 
-                          out5$B17010F_017[i], out5$B17010G_004[i], out5$B17010G_011[i], out5$B17010G_017[i], out5$B17010I_004[i], out5$B17010I_011[i], out5$B17010I_017[i], out5$B17010_004[i], out5$B17010_011[i], out5$B17010_017[i], out5$B17020A_002[i], out5$B17020B_002[i], out5$B17020C_002[i], out5$B17020D_002[i], out5$B17020E_002[i], out5$B17020F_002[i], out5$B17020G_002[i], out5$B17020I_002[i], out5$B17020_002[i], out5$out_calc[i], na.rm = T)
+  #out5$out_calc[i] <- sum(out5$B17001A_004[i], out5$B17001A_005[i], out5$B17001A_006[i], out5$B17001A_007[i], out5$B17001A_008[i], out5$B17001A_009[i], out5$B17001A_010[i], out5$B17001A_018[i], out5$B17001A_019[i], out5$B17001A_020[i], out5$B17001A_021[i], out5$B17001A_022[i], out5$B17001A_023[i], out5$B17001A_024[i], out5$B17001B_004[i], out5$B17001B_005[i], out5$B17001B_006[i], out5$B17001B_007[i], out5$B17001B_008[i], out5$B17001B_009[i], out5$B17001B_010[i], out5$B17001B_018[i], out5$B17001B_019[i], out5$B17001B_020[i], out5$B17001B_021[i], out5$B17001B_022[i], out5$B17001B_023[i], out5$B17001B_024[i], out5$B17001C_004[i], out5$B17001C_005[i], out5$B17001C_006[i], out5$B17001C_007[i], out5$B17001C_008[i], out5$B17001C_009[i], out5$B17001C_010[i], out5$B17001C_018[i], out5$B17001C_019[i], out5$B17001C_020[i], out5$B17001C_021[i], out5$B17001C_022[i], out5$B17001C_023[i], out5$B17001C_024[i], out5$B17001D_004[i], out5$B17001D_005[i], out5$B17001D_006[i], out5$B17001D_007[i], out5$B17001D_008[i], out5$B17001D_009[i], out5$B17001D_010[i], out5$B17001D_018[i], out5$B17001D_019[i], out5$B17001D_020[i], out5$B17001D_021[i], out5$B17001D_022[i], out5$B17001D_023[i], out5$B17001D_024[i], out5$B17001E_004[i], out5$B17001E_005[i], out5$B17001E_006[i], out5$B17001E_007[i], out5$B17001E_008[i], out5$B17001E_009[i], out5$B17001E_010[i], out5$B17001E_018[i], out5$B17001E_019[i], out5$B17001E_020[i], out5$B17001E_021[i], out5$B17001E_022[i], out5$B17001E_023[i], out5$B17001E_024[i], out5$B17001F_004[i], out5$B17001F_005[i], out5$B17001F_006[i], out5$B17001F_007[i], out5$B17001F_008[i], out5$B17001F_009[i], out5$B17001F_010[i], out5$B17001F_018[i], out5$B17001F_019[i], out5$B17001F_020[i], out5$B17001F_021[i], out5$B17001F_022[i], out5$B17001F_023[i], out5$B17001F_024[i], out5$B17001G_004[i], out5$B17001G_005[i], out5$B17001G_006[i], out5$B17001G_007[i], out5$B17001G_008[i], out5$B17001G_009[i], out5$B17001G_010[i], out5$B17001G_018[i], out5$B17001G_019[i], out5$B17001G_020[i], out5$B17001G_021[i], out5$B17001G_022[i], out5$B17001G_023[i], out5$B17001G_024[i], out5$B17001I_004[i], out5$B17001I_005[i], out5$B17001I_006[i], out5$B17001I_007[i], out5$B17001I_008[i], out5$B17001I_009[i], out5$B17001I_010[i], out5$B17001I_018[i], out5$B17001I_019[i], out5$B17001I_020[i], out5$B17001I_021[i], out5$B17001I_022[i], out5$B17001I_023[i], out5$B17001I_024[i], out5$B17001_004[i], out5$B17001_005[i], out5$B17001_006[i], out5$B17001_007[i], out5$B17001_008[i], out5$B17001_009[i], out5$B17001_010[i], out5$B17001_018[i], out5$B17001_019[i], out5$B17001_020[i], out5$B17001_021[i], out5$B17001_022[i], out5$B17001_023[i], out5$B17001_024[i], out5$B17010A_004[i], out5$B17010A_011[i], out5$B17010A_017[i], out5$B17010B_004[i], out5$B17010B_011[i], out5$B17010B_017[i], out5$B17010C_004[i], out5$B17010C_011[i], out5$B17010C_017[i], out5$B17010D_004[i], out5$B17010D_011[i], out5$B17010D_017[i], out5$B17010E_004[i], out5$B17010E_011[i], out5$B17010E_017[i], out5$B17010F_004[i], out5$B17010F_011[i], out5$B17010F_017[i], out5$B17010G_004[i], out5$B17010G_011[i], out5$B17010G_017[i], out5$B17010I_004[i], out5$B17010I_011[i], out5$B17010I_017[i], out5$B17010_004[i], out5$B17010_011[i], out5$B17010_017[i], out5$B17020A_002[i], out5$B17020B_002[i], out5$B17020C_002[i], out5$B17020D_002[i], out5$B17020E_002[i], out5$B17020F_002[i], out5$B17020G_002[i], out5$B17020I_002[i], out5$B17020_002[i], na.rm = T)
+  out5$out_calc[i] <- sum(unname(unlist(out5[i,which(grepl(pattern = "_\\d{1,}$", colnames(out5)))])),na.rm=T)
     }
 gc()
+
 
 out5 %>%
   as_tibble()
 
-
-
-
+ucomps(out5)
 rm(out4)
 
 gc()
@@ -262,51 +295,181 @@ out5$calc_type[is.na(out5$calc_type) &
                  grepl(pattern = " - ", out5$group_calculation) & 
                  !grepl(pattern = " \\(|\\)", x = out5$group_calculation)] <- 
   "simple_diff"
-out5$calc_type[out5$group_calculation %in% 
-                 "(B17001_004 + B17001_005 + B17001_006 + B17001_007 + B17001_008 + B17001_009 + B17001_010 + B17001_018 + B17001_019 + B17001_020 + B17001_021 + B17001_022 + B17001_023 + B17001_024) - (B17001I_004 + B17001I_005 + B17001I_006 + B17001I_007 + B17001I_008 + B17001I_009 + B17001I_010 + B17001I_018 + B17001I_019 + B17001I_020 + B17001I_021 + B17001I_022 + B17001I_023 + B17001I_024)"] <- 
-  "(G+H+I+J+K+L) - (A+B+C+D+E+F)"
 
-out5$calc_type[out5$group_calculation %in% 
-                 "(B17010_004 + B17010_011 + B17010_017) - (B17010I_004 + B17010I_011 + B17010I_017)"] <- 
-  "(D+E+F) - (A+B+C)"
 
+out5$calc_type[is.na(out5$calc_type)] <- out5$group_calculation[is.na(out5$calc_type)]
+
+
+# out5$calc_type[out5$group_calculation %in% 
+#                  "(B17001_004 + B17001_005 + B17001_006 + B17001_007 + B17001_008 + B17001_009 + B17001_010 + B17001_018 + B17001_019 + B17001_020 + B17001_021 + B17001_022 + B17001_023 + B17001_024) - (B17001I_004 + B17001I_005 + B17001I_006 + B17001I_007 + B17001I_008 + B17001I_009 + B17001I_010 + B17001I_018 + B17001I_019 + B17001I_020 + B17001I_021 + B17001I_022 + B17001I_023 + B17001I_024)"] <- 
+#   "(G+H+I+J+K+L) - (A+B+C+D+E+F)"
+# 
+# out5$calc_type[out5$group_calculation %in% 
+#                  "(B17010_004 + B17010_011 + B17010_017) - (B17010I_004 + B17010I_011 + B17010I_017)"] <- 
+#   "(D+E+F) - (A+B+C)"
+# 
+
+
+out5 %>%
+  group_by(calc_type) %>%
+  summarise(n = n(), 
+            n_calcs = n_distinct(group_calculation))
+
+unique(out5$group_calculation)
+
+any(is.na(out5$calc_type))
 
 # advanced calculate----
 unique(out5$calc_type)
 
+# sum all (don't do anything)
 out5$out_calc[!out5$calc_type %in% "sum_all"] <- NA
-out5$out_calc[out5$calc_type %in% c("simple_diff")] <- out5$B17020_002[out5$calc_type %in% c("simple_diff")] - out5$B17020I_002[out5$calc_type %in% c("simple_diff")]
-out5$out_calc[out5$calc_type %in% c("(D+E+F) - (A+B+C")] <- (out5$B17010_004[out5$calc_type %in% c("(D+E+F) - (A+B+C")] + out5$B17010_011[out5$calc_type %in% c("(D+E+F) - (A+B+C")] + out5$B17010_017[out5$calc_type %in% c("(D+E+F) - (A+B+C")]) - 
-  (out5$B17010I_004[out5$calc_type %in% c("(D+E+F) - (A+B+C")] + out5$B17010I_011[out5$calc_type %in% c("(D+E+F) - (A+B+C")] + out5$B17010I_017[out5$calc_type %in% c("(D+E+F) - (A+B+C")])
+#out5$out_calc[out5$calc_type %in% "sum_all"]
+
+# simple diff
+gc_simple.diff <- unique(out5[out5$calc_type %in% "simple_diff",]$group_calculation)
+
+gc_simple.diff[3]
+
+# data missing----
+try(out5$out_calc[out5$group_calculation %in% gc_simple.diff[1]] <- out5$B17001_001[out5$group_calculation %in% gc_simple.diff[1]] - out5$B17001I_001[out5$group_calculation %in% gc_simple.diff[1]])
+# data missing----
+try(out5$out_calc[out5$group_calculation %in% gc_simple.diff[2]] <- out5$B01001_001[out5$group_calculation %in% gc_simple.diff[2]] - out5$B01001I_001[out5$group_calculation %in% gc_simple.diff[2]])
+out5$out_calc[out5$group_calculation %in% gc_simple.diff[3]] <- out5$B17020_002[out5$group_calculation %in% gc_simple.diff[3]] - out5$B17020I_002[out5$group_calculation %in% gc_simple.diff[3]]
+
+
+# other advanced
+
+gc_other.adv <- unique(out5[!out5$calc_type %in% c("sum_all", "simple_diff"),]$group_calculation) %>%
+  unique()
+
+gc_other.adv2 <- gc_other.adv %>%
+  gsub("\\)", "\\)\n", .) %>%
+  gsub("$", "\n\n", .) %>%
+  gsub(" \\+ ", " +\n\t", .) %>%
+  gsub(" \\(", "\n\\(", .) %>%
+  gsub("^", "** ", .) %>%
+  gsub("\\(", "\\(\n ", .) %>%
+  gsub("\\)", "\n  \\)", .) %>%
+  as.list() 
+
+cat(gc_other.adv2[[1]])
+out5$out_calc[out5$group_calculation == gc_other.adv[1]] <- (out5$B17010_004[out5$group_calculation == gc_other.adv[1]] + 
+                                                               out5$B17010_011[out5$group_calculation == gc_other.adv[1]] + 
+                                                               out5$B17010_017[out5$group_calculation == gc_other.adv[1]]) - 
+  (out5$B17010I_004[out5$group_calculation == gc_other.adv[1]] + 
+     out5$B17010I_011[out5$group_calculation == gc_other.adv[1]] + 
+     out5$B17010I_017[out5$group_calculation == gc_other.adv[1]])
+
+# missing data----
+cat(gc_other.adv2[[2]])
+try(out5$out_calc[out5$group_calculation == gc_other.adv[2]] <-  out5$B21001_002[out5$group_calculation == gc_other.adv[2]] - 
+  (out5$C21001I_011[out5$group_calculation == gc_other.adv[2]] + 
+     out5$C21001I_014[out5$group_calculation == gc_other.adv[2]] + 
+     out5$C21001I_004[out5$group_calculation == gc_other.adv[2]] + 
+     out5$C21001I_007[out5$group_calculation == gc_other.adv[2]]))
+
+# missing data----
+cat(gc_other.adv2[[3]])
+try(out5$out_calc[out5$group_calculation == gc_other.adv[3]] <- (out5$B01001_003[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_004[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_005[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_006[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_007[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_008[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_009[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_010[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_027[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_028[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_029[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_030[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_031[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_032[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_033[out5$group_calculation == gc_other.adv[3]] +
+                                                               out5$B01001_034[out5$group_calculation == gc_other.adv[3]]) - 
+  (out5$B01001I_003[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_004[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_005[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_006[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_007[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_008[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_009[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_010[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_027[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_028[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_029[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_030[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_031[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_032[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_033[out5$group_calculation == gc_other.adv[3]] +
+     out5$B01001I_034[out5$group_calculation == gc_other.adv[3]]))
+
+
+cat(gc_other.adv2[[4]])
+out5$out_calc[out5$group_calculation == gc_other.adv[4]] <- (out5$B17001_004[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_005[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_006[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_007[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_008[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_009[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_010[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_018[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_019[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_020[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_021[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_022[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_023[out5$group_calculation == gc_other.adv[4]] +
+                                                                   out5$B17001_024[out5$group_calculation == gc_other.adv[4]]) - 
+  (out5$B17001I_004[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_005[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_006[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_007[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_008[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_009[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_010[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_018[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_019[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_020[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_021[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_022[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_023[out5$group_calculation == gc_other.adv[4]] +
+     out5$B17001I_024[out5$group_calculation == gc_other.adv[4]])
 
 
 
-
-temp.outlast <- out5$group_calculation[out5$calc_type %in% c("(G+H+I+J+K+L) - (A+B+C+D+E+F)")] %>% unique() %>%
-  strsplit(x = ., 
-           split = "\\(|\\)") %>%
-  unlist() %>%
-  .[. != ""] %>%
-  .[. != " - "] %>%
-  strsplit(., split = " \\+ ")
+# out5$out_calc[out5$calc_type %in% c("(D+E+F) - (A+B+C")] <- (out5$B17010_004[out5$calc_type %in% c("(D+E+F) - (A+B+C")] + out5$B17010_011[out5$calc_type %in% c("(D+E+F) - (A+B+C")] + out5$B17010_017[out5$calc_type %in% c("(D+E+F) - (A+B+C")]) - 
+#   (out5$B17010I_004[out5$calc_type %in% c("(D+E+F) - (A+B+C")] + out5$B17010I_011[out5$calc_type %in% c("(D+E+F) - (A+B+C")] + out5$B17010I_017[out5$calc_type %in% c("(D+E+F) - (A+B+C")])
+# 
+# 
 
 
-paste(rep("out5$",14), temp.outlast[[1]], rep("[out5$calc_type == \"(G+H+I+J+K+L) - (A+B+C+D+E+F)\"]", 14), sep = "", collapse = " + ") %>% cat()
-paste(rep("out5$",14), temp.outlast[[2]], rep("[out5$calc_type == \"(G+H+I+J+K+L) - (A+B+C+D+E+F)\"]", 14), sep = "", collapse = " + ") %>% cat()
+# temp.outlast <- out5$group_calculation[out5$calc_type %in% c("simple_diff")] %>% unique() %>%
+#   strsplit(x = ., 
+#            split = "\\(|\\)") %>%
+#   unlist() %>%
+#   .[. != ""] %>%
+#   .[. != " - "] %>%
+#   strsplit(., split = " \\+ ")
+# 
+# 
+# paste(rep("out5$",14), temp.outlast[[1]], rep("[out5$calc_type == \"(G+H+I+J+K+L) - (A+B+C+D+E+F)\"]", 14), sep = "", collapse = " + ") %>% cat()
+# paste(rep("out5$",14), temp.outlast[[2]], rep("[out5$calc_type == \"(G+H+I+J+K+L) - (A+B+C+D+E+F)\"]", 14), sep = "", collapse = " + ") %>% cat()
+# 
+# 
+# out5$out_calc[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] <- (out5$B17001_004[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_005[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
+#                                                                        out5$B17001_006[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_007[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
+#                                                                        out5$B17001_008[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_009[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] +
+#                                                                        out5$B17001_010[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_018[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
+#                                                                        out5$B17001_019[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_020[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
+#                                                                        out5$B17001_021[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_022[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
+#                                                                        out5$B17001_023[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_024[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"]) - 
+#   (out5$B17001I_004[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_005[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_006[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
+#      out5$B17001I_007[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_008[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_009[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
+#      out5$B17001I_010[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_018[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_019[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
+#      out5$B17001I_020[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_021[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_022[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
+#      out5$B17001I_023[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_024[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"])
 
-
-out5$out_calc[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] <- (out5$B17001_004[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_005[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
-                                                                       out5$B17001_006[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_007[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
-                                                                       out5$B17001_008[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_009[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] +
-                                                                       out5$B17001_010[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_018[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
-                                                                       out5$B17001_019[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_020[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
-                                                                       out5$B17001_021[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_022[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
-                                                                       out5$B17001_023[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001_024[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"]) - 
-  (out5$B17001I_004[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_005[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_006[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
-     out5$B17001I_007[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_008[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_009[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
-     out5$B17001I_010[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_018[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_019[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
-     out5$B17001I_020[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_021[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_022[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + 
-     out5$B17001I_023[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] + out5$B17001I_024[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"])
+any(is.na(out5$out_calc))
 
 # write----
 
