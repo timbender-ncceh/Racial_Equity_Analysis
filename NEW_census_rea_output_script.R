@@ -185,16 +185,16 @@ out3 <- left_join(out, out2, by = c("variable_name" = "variable"))
 #   .[,c(1,2,4,5,6,7,8,9)] %>%
 #   .[!duplicated(.),]
 
-out3 %>%
-  as.data.table() %>%
-  dcast(., 
-        population + subpopulation + 
-          concept + label + 
-          year + poptype + famtype + NAME ~ variable_name, 
-        fun.aggregate = sum, 
-        value.var = "estimate", 
-        fill = NA) %>%
-  .[!duplicated(.),] %>% nrow()
+# out3 %>%
+#   as.data.table() %>%
+#   dcast(., 
+#         population + subpopulation + 
+#           concept + label + 
+#           year + poptype + famtype + NAME ~ variable_name, 
+#         fun.aggregate = sum, 
+#         value.var = "estimate", 
+#         fill = NA) %>%
+#   .[!duplicated(.),] %>% nrow()
 
 out4 <- out3 %>%
   as.data.table() %>%
@@ -311,6 +311,8 @@ out5$out_calc[out5$calc_type == "(G+H+I+J+K+L) - (A+B+C+D+E+F)"] <- (out5$B17001
 # write----
 
 write_csv(x = out5, "NEW_census_rea_output_data_2018_to_2022.csv")
+write_csv(x = vars.acs5, "acs5_data_dictionary.csv")
+
 
 library(ggplot2)
 
